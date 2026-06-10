@@ -1,0 +1,16 @@
+{
+    "name": "travelguider-monorepo",
+    "version": "1.0.0",
+    "description": "Full-stack TravelGuider application (React + Node + MySQL)",
+    "main": "server/index.js",
+    "scripts": {
+        "install-all": "npm install && cd client && npm install && cd ../server && npm install",
+        "client": "cd client && npm run dev",
+        "server": "cd server && node index.js",
+        "dev": "concurrently \"npm run server\" \"npm run client\"",
+        "start": "npm run dev"
+    },
+    "devDependencies": {
+        "concurrently": "^8.2.2"
+    }
+}
