@@ -1,36 +1,25 @@
-# 🌍 TravelGuider - Full Stack Travel Assistant
+# Smart Travel Guider Web Application
 
-A complete smart travel planning system for Sri Lanka with a React frontend, Node.js backend, and MySQL database.
+A full-stack web application that helps users plan smart trips in Sri Lanka.
 
-## 🚀 One-Click Start
-To get everything running without errors, follow these simple steps:
+## Features
 
-### 1. Prerequisites
-- **MySQL Server**: Ensure your MySQL (XAMPP / WAMP / Standalone) is **RUNNING**.
-- **Credentials**: By default, it uses `user: root` and `password: ""` (empty).
+- Smart itinerary generation
+- AI travel assistant
+- Hotel and service management
+- User authentication
+- Admin dashboard
 
-### 2. Quick Setup
-Open **one** terminal in this folder and run:
-```bash
-# 1. Install all dependencies (Frontend + Backend)
-npm run install-all
+## Technologies Used
 
-# 2. Start the project
-npm run dev
-```
+Frontend:
+- React
+- Vite
+- Tailwind CSS
 
-### 3. Access
-- **Website**: [http://localhost:3000](http://localhost:3000)
-- **API**: [http://localhost:5000](http://localhost:5000)
+Backend:
+- Node.js
+- Express.js
 
-## 📁 Project Structure
-- `client/`: React + Vite + Tailwind CSS (Frontend)
-- `server/`: Node.js + Express + JWT (Backend)
-- `sql/`: Manual Database Schema (Auto-created by server if not found)
-
-## 🛠️ Features
-- **Integrated Auth**: Login, Register, Forgot Password.
-- **Smart Planning**: Destination search, budget slider, interest cards.
-- **AI Chatbot**: Mock responses for Kandy, Colombo, and Beaches.
-- **Hotel Catalog**: Luxury and budget hotel listings.
-- **Itinerary**: Day-by-day trip summary with status markers.
+Database:
+- MySQL
