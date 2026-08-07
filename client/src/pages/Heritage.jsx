@@ -9,8 +9,8 @@ const Heritage = () => {
     const heritageSites = [
         {
             title: 'Ancient City of Sigiriya',
-            description: 'A UNESCO World Heritage Site, Sigiriya is an ancient rock fortress and palace ruin surrounded by the remains of gardens, reservoirs, and other structures.',
-            img: '/images/destinations/sigiriya.jpg',
+            description: 'A UNESCO World Heritage Site, Sigiriya is an ancient rock fortress and palace ruin surrounded by the remains of gardens, reservoirs, and famous ancient frescoes.',
+            img: '/sigiriya_frescoes.jpg',
             location: 'Matale District',
             era: '5th Century AD',
             type: 'Archaeological Site',
@@ -19,7 +19,7 @@ const Heritage = () => {
         {
             title: 'Temple of the Sacred Tooth Relic',
             description: 'Located in Kandy, this temple houses the relic of the tooth of Buddha. It is one of the most sacred places of worship in the Buddhist world.',
-            img: '/images/destinations/temple-of-tooth.jpg',
+            img: '/temple_of_tooth.jpg',
             location: 'Kandy',
             era: '1595 AD',
             type: 'Religious Site',
@@ -28,7 +28,7 @@ const Heritage = () => {
         {
             title: 'Galle Fort',
             description: 'Built by the Portuguese in 1588 and extensively fortified by the Dutch, Galle Fort is a UNESCO World Heritage Site showcasing colonial architecture.',
-            img: 'https://www.goedkoperondreis.com/wp-content/uploads/2021/07/bile-2362232_1280.jpg',
+            img: '/galle_fort.jpg',
             location: 'Galle',
             era: '16th Century',
             type: 'Colonial Fort',
@@ -37,7 +37,7 @@ const Heritage = () => {
         {
             title: 'Dambulla Cave Temple',
             description: 'The largest and best-preserved cave temple complex in Sri Lanka, featuring Buddhist mural paintings and over 150 statues of Buddha.',
-            img: 'https://explorelanka.com/wp-content/uploads/2015/03/dambulla_cave_temples__sri_lanka.jpg',
+            img: '/dambulla_cave.jpg',
             location: 'Dambulla',
             era: '1st Century BC',
             type: 'Cave Temple',
@@ -46,7 +46,7 @@ const Heritage = () => {
         {
             title: 'Ancient City of Polonnaruwa',
             description: 'The second capital of Sri Lanka after Anuradhapura, Polonnaruwa is a UNESCO World Heritage Site with well-preserved ruins of ancient Buddhist temples and palaces.',
-            img: 'https://lonelyplanetimages.imgix.net/mastheads/GettyImages-546421195_full.jpg?sharp=10&vib=20&w=1200',
+            img: '/polonnaruwa.jpg',
             location: 'Polonnaruwa District',
             era: '11th-13th Century AD',
             type: 'Archaeological Site',
@@ -55,7 +55,7 @@ const Heritage = () => {
         {
             title: 'Ancient City of Anuradhapura',
             description: 'The first capital of Sri Lanka and a sacred city for Buddhists. Home to ancient monasteries, palaces, and the sacred Bodhi tree.',
-            img: 'https://www.bluelankatours.com/wp-content/uploads/2017/05/Ancient_City_Of_Anuradhapura.jpg',
+            img: '/anuradhapura.jpg',
             location: 'Anuradhapura District',
             era: '4th Century BC',
             type: 'Archaeological Site',

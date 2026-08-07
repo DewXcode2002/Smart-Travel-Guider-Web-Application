@@ -101,74 +101,102 @@ const PaymentModal = ({ isOpen, onClose, bookingDetails, onPaymentComplete }) =>
         }, 1500);
     };
 
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md animate-fade-in" onClick={onClose}></div>
+    const amountToDisplay = Number(bookingDetails?.totalAmount) > 0 ? Number(bookingDetails?.totalAmount) : 350;
 
-            <div className="relative glass w-full max-w-2xl rounded-[2.5rem] shadow-2xl border border-white/50 overflow-hidden animate-zoom-in">
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+            <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-md animate-fade-in" onClick={onClose}></div>
+
+            <div className="relative glass w-full max-w-xl my-auto rounded-[2.5rem] shadow-2xl border border-white/60 overflow-hidden animate-zoom-in max-h-[92vh] flex flex-col bg-white/95">
                 {paymentSuccess ? (
-                    <div className="p-12 text-center space-y-6">
-                        <div className="w-24 h-24 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-xl shadow-emerald-200 mx-auto animate-zoom-in">
-                            <Check size={48} strokeWidth={3} />
+                    <div className="p-10 text-center space-y-6 my-auto">
+                        <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-xl shadow-emerald-200 mx-auto animate-zoom-in">
+                            <Check size={40} strokeWidth={3} />
                         </div>
                         <h3 className="text-3xl font-black text-gray-900 tracking-tight">Payment Successful!</h3>
-                        <p className="text-gray-500 font-medium">Your booking has been confirmed. Redirecting...</p>
+                        <p className="text-gray-500 font-medium">Your booking has been confirmed. Redirecting to your trips...</p>
                     </div>
                 ) : (
-                    <form onSubmit={handleSubmit} className="p-8 space-y-8">
-                        <div className="flex justify-between items-start">
+                    <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6 overflow-y-auto custom-scrollbar">
+                        <div className="flex justify-between items-center pb-2 border-b border-slate-100">
                             <div>
-                                <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-1">Secure Payment</p>
-                                <h3 className="text-3xl font-black text-gray-900 tracking-tight">Complete Booking</h3>
+                                <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em] bg-primary/10 px-3 py-1 rounded-full">Secure Payment</span>
+                                <h3 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight mt-2">Complete Reservation</h3>
                             </div>
-                            <button type="button" onClick={onClose} className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-gray-400 hover:bg-primary hover:text-white transition-all">
+                            <button type="button" onClick={onClose} className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-gray-500 hover:bg-rose-500 hover:text-white transition-all shadow-sm">
                                 <X size={20} />
                             </button>
                         </div>
 
-                        {/* Payment Summary */}
-                        <div className="p-6 bg-slate-900 rounded-[2rem] text-white">
-                            <div className="flex justify-between items-center">
+                        {/* Payment Summary Header Card */}
+                        <div className="p-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 rounded-[2rem] text-white shadow-xl relative overflow-hidden space-y-3">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-2xl pointer-events-none"></div>
+                            <div className="flex justify-between items-start relative z-10">
                                 <div>
-                                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Total Amount</p>
-                                    <PriceDisplay amount={bookingDetails?.totalAmount || 0} from="USD" className="text-3xl text-white" />
+                                    <p className="text-[11px] font-extrabold text-white/50 uppercase tracking-widest mb-1">Total Payable Amount</p>
+                                    <PriceDisplay amount={amountToDisplay} from="USD" className="text-3xl sm:text-4xl text-white font-black" />
                                 </div>
-                                <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-lg">
-                                    <Lock size={24} />
+                                <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-white backdrop-blur-xl border border-white/10 shadow-inner">
+                                    <Lock size={22} className="text-emerald-400" />
                                 </div>
                             </div>
+
+                            {bookingDetails?.baseAmount && (
+                                <div className="pt-2 border-t border-white/10 space-y-1 text-xs text-white/70 font-medium relative z-10">
+                                    <div className="flex justify-between">
+                                        <span>Trip Experience Total:</span>
+                                        <PriceDisplay amount={bookingDetails.baseAmount} from="USD" className="font-bold text-white" />
+                                    </div>
+                                    <div className="flex justify-between text-emerald-400">
+                                        <span>Platform Reservation Guarantee (3%):</span>
+                                        <PriceDisplay amount={bookingDetails.platformFee} from="USD" className="font-bold" />
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Payment Method Selection */}
-                        <div className="space-y-4">
-                            <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Payment Method</label>
-                            <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-3">
+                            <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Payment Method</label>
+                            <div className="grid grid-cols-2 gap-3">
                                 {[
-                                    { id: 'credit_card', label: 'Credit Card' },
-                                    { id: 'debit_card', label: 'Debit Card' },
-                                    { id: 'paypal', label: 'PayPal' },
-                                    { id: 'bank_transfer', label: 'Bank Transfer' }
-                                ].map(method => (
-                                    <button
-                                        key={method.id}
-                                        type="button"
-                                        onClick={() => setPaymentMethod(method.id)}
-                                        className={`p-4 rounded-2xl border-2 font-bold text-sm transition-all ${paymentMethod === method.id
-                                                ? 'border-primary bg-primary/5 text-primary'
-                                                : 'border-slate-200 text-gray-600 hover:border-primary/30'
+                                    { id: 'credit_card', label: 'Credit Card', icon: '💳' },
+                                    { id: 'debit_card', label: 'Debit Card', icon: '🏦' },
+                                    { id: 'paypal', label: 'PayPal', icon: '🅿️' },
+                                    { id: 'bank_transfer', label: 'Bank Transfer', icon: '🏛️' }
+                                ].map(method => {
+                                    const isSelected = paymentMethod === method.id;
+                                    return (
+                                        <button
+                                            key={method.id}
+                                            type="button"
+                                            onClick={() => setPaymentMethod(method.id)}
+                                            className={`p-4 rounded-2xl border-2 font-black text-sm transition-all flex items-center justify-between shadow-sm ${
+                                                isSelected
+                                                    ? 'border-slate-900 bg-slate-900 text-white shadow-md scale-[1.01]'
+                                                    : 'border-slate-200/80 bg-slate-50/80 text-gray-700 hover:border-slate-400 hover:bg-slate-100/60'
                                             }`}
-                                    >
-                                        {method.label}
-                                    </button>
-                                ))}
+                                        >
+                                            <span className="flex items-center gap-2">
+                                                <span>{method.icon}</span>
+                                                {method.label}
+                                            </span>
+                                            {isSelected && (
+                                                <div className="w-5 h-5 rounded-full bg-emerald-400 text-slate-900 flex items-center justify-center">
+                                                    <Check size={12} strokeWidth={3} />
+                                                </div>
+                                            )}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
 
                         {/* Card Details (only for card payments) */}
                         {(paymentMethod === 'credit_card' || paymentMethod === 'debit_card') && (
-                            <div className="space-y-6">
-                                <div className="space-y-4">
-                                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Card Number</label>
+                            <div className="space-y-4 pt-2">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Card Number</label>
                                     <div className="relative">
                                         <input
                                             type="text"
@@ -176,49 +204,49 @@ const PaymentModal = ({ isOpen, onClose, bookingDetails, onPaymentComplete }) =>
                                             onChange={(e) => handleInputChange('cardNumber', e.target.value)}
                                             placeholder="1234 5678 9012 3456"
                                             maxLength="19"
-                                            className={`w-full bg-slate-50 border-2 ${errors.cardNumber ? 'border-rose-300' : 'border-slate-100'} rounded-2xl py-4 px-6 focus:bg-white focus:border-primary focus:ring-8 focus:ring-primary/5 outline-none font-bold text-gray-900`}
+                                            className={`w-full bg-slate-50/90 border-2 ${errors.cardNumber ? 'border-rose-400' : 'border-slate-200'} rounded-2xl py-3.5 pl-5 pr-12 focus:bg-white focus:border-slate-900 focus:ring-4 focus:ring-slate-900/5 outline-none font-bold text-gray-900 text-sm tracking-wider`}
                                         />
-                                        <CreditCard className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-300" size={20} />
+                                        <CreditCard className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                                     </div>
-                                    {errors.cardNumber && <p className="text-rose-500 text-xs font-bold flex items-center gap-2"><AlertCircle size={12} /> {errors.cardNumber}</p>}
+                                    {errors.cardNumber && <p className="text-rose-500 text-xs font-bold flex items-center gap-1.5 ml-1"><AlertCircle size={12} /> {errors.cardNumber}</p>}
                                 </div>
 
-                                <div className="space-y-4">
-                                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Cardholder Name</label>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Cardholder Name</label>
                                     <input
                                         type="text"
                                         value={formData.cardName}
                                         onChange={(e) => handleInputChange('cardName', e.target.value.toUpperCase())}
                                         placeholder="JOHN DOE"
-                                        className={`w-full bg-slate-50 border-2 ${errors.cardName ? 'border-rose-300' : 'border-slate-100'} rounded-2xl py-4 px-6 focus:bg-white focus:border-primary focus:ring-8 focus:ring-primary/5 outline-none font-bold text-gray-900`}
+                                        className={`w-full bg-slate-50/90 border-2 ${errors.cardName ? 'border-rose-400' : 'border-slate-200'} rounded-2xl py-3.5 px-5 focus:bg-white focus:border-slate-900 focus:ring-4 focus:ring-slate-900/5 outline-none font-bold text-gray-900 text-sm tracking-wide`}
                                     />
-                                    {errors.cardName && <p className="text-rose-500 text-xs font-bold flex items-center gap-2"><AlertCircle size={12} /> {errors.cardName}</p>}
+                                    {errors.cardName && <p className="text-rose-500 text-xs font-bold flex items-center gap-1.5 ml-1"><AlertCircle size={12} /> {errors.cardName}</p>}
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-6">
-                                    <div className="space-y-4">
-                                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Expiry Date</label>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Expiry Date</label>
                                         <input
                                             type="text"
                                             value={formData.expiryDate}
                                             onChange={(e) => handleInputChange('expiryDate', e.target.value)}
                                             placeholder="MM/YY"
                                             maxLength="5"
-                                            className={`w-full bg-slate-50 border-2 ${errors.expiryDate ? 'border-rose-300' : 'border-slate-100'} rounded-2xl py-4 px-6 focus:bg-white focus:border-primary focus:ring-8 focus:ring-primary/5 outline-none font-bold text-gray-900`}
+                                            className={`w-full bg-slate-50/90 border-2 ${errors.expiryDate ? 'border-rose-400' : 'border-slate-200'} rounded-2xl py-3.5 px-5 focus:bg-white focus:border-slate-900 focus:ring-4 focus:ring-slate-900/5 outline-none font-bold text-gray-900 text-sm`}
                                         />
-                                        {errors.expiryDate && <p className="text-rose-500 text-xs font-bold flex items-center gap-2"><AlertCircle size={12} /> {errors.expiryDate}</p>}
+                                        {errors.expiryDate && <p className="text-rose-500 text-xs font-bold flex items-center gap-1.5 ml-1"><AlertCircle size={12} /> {errors.expiryDate}</p>}
                                     </div>
-                                    <div className="space-y-4">
-                                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest">CVV</label>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">CVV</label>
                                         <input
                                             type="text"
                                             value={formData.cvv}
                                             onChange={(e) => handleInputChange('cvv', e.target.value)}
                                             placeholder="123"
                                             maxLength="3"
-                                            className={`w-full bg-slate-50 border-2 ${errors.cvv ? 'border-rose-300' : 'border-slate-100'} rounded-2xl py-4 px-6 focus:bg-white focus:border-primary focus:ring-8 focus:ring-primary/5 outline-none font-bold text-gray-900`}
+                                            className={`w-full bg-slate-50/90 border-2 ${errors.cvv ? 'border-rose-400' : 'border-slate-200'} rounded-2xl py-3.5 px-5 focus:bg-white focus:border-slate-900 focus:ring-4 focus:ring-slate-900/5 outline-none font-bold text-gray-900 text-sm`}
                                         />
-                                        {errors.cvv && <p className="text-rose-500 text-xs font-bold flex items-center gap-2"><AlertCircle size={12} /> {errors.cvv}</p>}
+                                        {errors.cvv && <p className="text-rose-500 text-xs font-bold flex items-center gap-1.5 ml-1"><AlertCircle size={12} /> {errors.cvv}</p>}
                                     </div>
                                 </div>
                             </div>
@@ -226,41 +254,46 @@ const PaymentModal = ({ isOpen, onClose, bookingDetails, onPaymentComplete }) =>
 
                         {/* PayPal/Bank Transfer Info */}
                         {paymentMethod === 'paypal' && (
-                            <div className="p-6 bg-blue-50 rounded-2xl border border-blue-100">
-                                <p className="text-sm font-bold text-blue-900">You will be redirected to PayPal to complete your payment securely.</p>
+                            <div className="p-5 bg-blue-50/80 rounded-2xl border border-blue-200 text-blue-900 text-sm font-bold flex items-center gap-3">
+                                <span className="text-2xl">🅿️</span>
+                                <span>You will be redirected to PayPal to complete your payment securely.</span>
                             </div>
                         )}
 
                         {paymentMethod === 'bank_transfer' && (
-                            <div className="p-6 bg-amber-50 rounded-2xl border border-amber-100">
-                                <p className="text-sm font-bold text-amber-900">Bank transfer details will be sent to your email after confirmation.</p>
+                            <div className="p-5 bg-amber-50/80 rounded-2xl border border-amber-200 text-amber-900 text-sm font-bold flex items-center gap-3">
+                                <span className="text-2xl">🏛️</span>
+                                <span>Direct bank transfer details will be sent to your registered email address upon confirmation.</span>
                             </div>
                         )}
 
                         {/* Submit Button */}
-                        <button
-                            type="submit"
-                            disabled={processing}
-                            className={`w-full py-5 rounded-2xl font-black text-white shadow-xl transition-all flex items-center justify-center gap-3 ${processing
-                                    ? 'bg-gray-400 cursor-wait'
-                                    : 'bg-primary shadow-primary/20 hover:bg-primary-hover hover:scale-[1.02] active:scale-[0.98]'
+                        <div className="pt-2">
+                            <button
+                                type="submit"
+                                disabled={processing}
+                                className={`w-full py-4 sm:py-5 rounded-2xl font-black text-white text-base shadow-xl transition-all flex items-center justify-center gap-3 ${
+                                    processing
+                                        ? 'bg-slate-400 cursor-wait'
+                                        : 'bg-gradient-to-r from-primary via-emerald-600 to-teal-600 shadow-primary/25 hover:opacity-95 hover:scale-[1.01] active:scale-[0.99]'
                                 }`}
-                        >
-                            {processing ? (
-                                <>
-                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                    Processing Payment...
-                                </>
-                            ) : (
-                                <>
-                                    <Lock size={20} />
-                                    Pay Securely
-                                </>
-                            )}
-                        </button>
+                            >
+                                {processing ? (
+                                    <>
+                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                        Processing Payment...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Lock size={18} />
+                                        Pay Securely
+                                    </>
+                                )}
+                            </button>
+                        </div>
 
-                        <p className="text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                            🔒 Your payment is secured with 256-bit SSL encryption
+                        <p className="text-center text-[11px] font-bold text-gray-400 tracking-wider">
+                            🔒 256-Bit Encrypted SSL Secure Checkout
                         </p>
                     </form>
                 )}

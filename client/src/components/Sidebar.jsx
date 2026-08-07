@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Map, Briefcase, MessageSquare, User, LogOut, Compass, Shield } from 'lucide-react';
+import { LayoutDashboard, Map, Briefcase, MessageSquare, User, LogOut, Compass, Shield, UserCheck, Car } from 'lucide-react';
 import CurrencySwitcher from './CurrencySwitcher';
 
 const navItems = [
@@ -8,6 +8,8 @@ const navItems = [
     { name: 'Plan a Trip', icon: Map, href: '/plan-trip' },
     { name: 'My Bookings', icon: Briefcase, href: '/bookings' },
     { name: 'Hotels', icon: Compass, href: '/hotels' },
+    { name: 'Tour Guides', icon: UserCheck, href: '/guides' },
+    { name: 'Transport', icon: Car, href: '/transport' },
     { name: 'Admin', icon: Shield, href: '/admin' },
     { name: 'Chatbot', icon: MessageSquare, href: '/chatbot' },
     { name: 'Profile', icon: User, href: '/profile' },

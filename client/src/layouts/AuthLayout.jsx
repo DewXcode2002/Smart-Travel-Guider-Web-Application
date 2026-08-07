@@ -37,19 +37,19 @@ const AuthLayout = ({ children, title, subtitle, showImage = true }) => {
                 </div>
             )}
 
-            <div className={`flex-1 flex flex-col justify-center items-center p-8 lg:p-20 bg-white overflow-y-auto relative`}>
-                <div className="w-full max-w-md animate-slide-in">
-                    <div className="mb-12">
+            <div className={`flex-1 flex flex-col items-center py-12 px-6 sm:px-12 lg:px-16 bg-white overflow-y-auto relative`}>
+                <div className="w-full max-w-md my-auto animate-slide-in">
+                    <div className="mb-10 pt-2">
                         <div className="lg:hidden flex items-center gap-3 mb-8">
                             <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
                                 <div className="w-5 h-5 bg-primary rounded-md"></div>
                             </div>
                             <span className="text-slate-900 font-black uppercase tracking-[0.3em] text-[10px]">TravelGuider</span>
                         </div>
-                        <h2 className="text-5xl font-black text-slate-900 tracking-tighter mb-3 leading-tight">
+                        <h2 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tighter mb-3 leading-[1.15] pt-1">
                             {title}
                         </h2>
-                        <p className="text-slate-500 font-medium text-lg">{subtitle}</p>
+                        <p className="text-slate-500 font-medium text-base sm:text-lg">{subtitle}</p>
                     </div>
                     <div className="relative z-10">
                         {children}

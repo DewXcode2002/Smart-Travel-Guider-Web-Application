@@ -20,6 +20,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminLogin from './pages/AdminLogin';
 import SupplierDashboard from './pages/SupplierDashboard';
 import Guides from './pages/Guides';
+import Transport from './pages/Transport';
 
 function App() {
     return (
@@ -32,6 +33,7 @@ function App() {
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/admin/login" element={<AdminLogin />} />
                 <Route path="/guides" element={<Guides />} />
+                <Route path="/transport" element={<Transport />} />
                 <Route path="/supplier" element={<SupplierDashboard />} />
                 <Route path="/plan-trip" element={<PlanTrip />} />
                 <Route path="/chatbot" element={<Chatbot />} />

@@ -138,6 +138,7 @@ const Bookings = () => {
 
     // Image Data Sources
     const hotelImages = {
+        'Jaffna Heritage Hotel': 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/33054198.jpg?k=b4e3347b59b1faeb7c53d0e98031575e92750e38680bc9b37a3bd4755106190f&o=&hp=1',
         'Galle Face Hotel': 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=600',
         'Heritance Kandalama': 'https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&q=80&w=600',
         'Jetwing Lighthouse': 'https://images.unsplash.com/photo-1540518614846-7eded433c457?auto=format&fit=crop&q=80&w=600',
@@ -153,6 +154,7 @@ const Bookings = () => {
     };
 
     const placeImages = {
+        'Jaffna Fort': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Jaffna_fort-5-jaffna-Sri_Lanka.jpg/800px-Jaffna_fort-5-jaffna-Sri_Lanka.jpg',
         'Sigiriya': 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800',
         'Ella Rock': 'https://images.unsplash.com/photo-1588257833075-514b87e22026?auto=format&fit=crop&q=80&w=800',
         'Mirissa Beach': 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?auto=format&fit=crop&q=80&w=800',
@@ -162,8 +164,15 @@ const Bookings = () => {
     };
 
     const getImage = (name, type) => {
-        if (type === 'hotel') return hotelImages[name];
-        if (type === 'place') return placeImages[name];
+        if (!name) return null;
+        if (type === 'hotel') {
+            const foundKey = Object.keys(hotelImages).find(key => key.toLowerCase().includes(name.toLowerCase()) || name.toLowerCase().includes(key.toLowerCase()));
+            return foundKey ? hotelImages[foundKey] : 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=600';
+        }
+        if (type === 'place') {
+            const foundKey = Object.keys(placeImages).find(key => key.toLowerCase().includes(name.toLowerCase()) || name.toLowerCase().includes(key.toLowerCase()));
+            return foundKey ? placeImages[foundKey] : 'https://images.unsplash.com/photo-1588257833075-514b87e22026?auto=format&fit=crop&q=80&w=800';
+        }
         return null;
     };
 

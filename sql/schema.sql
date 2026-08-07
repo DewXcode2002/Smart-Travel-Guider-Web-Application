@@ -120,3 +120,16 @@ CREATE TABLE transportation (
     daily_rate_range VARCHAR(100),
     FOREIGN KEY (district_id) REFERENCES districts(district_id)
 );
+
+-- Ratings & Reviews Table
+CREATE TABLE IF NOT EXISTS ratings (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NULL,
+    item_type VARCHAR(50) DEFAULT 'platform',
+    item_id INT NULL,
+    item_name VARCHAR(255) NULL,
+    rating INT NOT NULL,
+    feedback TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);

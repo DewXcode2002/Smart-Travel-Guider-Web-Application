@@ -79,7 +79,7 @@ const HeritageDetail = () => {
         'galle-fort': {
             title: 'Galle Dutch Fort',
             tagline: 'Living Heritage',
-            img: 'https://www.thedivinevilla.com/upload/attraction/gallery/-172791908728_18411232178_1674550008_n.jpg',
+            img: '/galle_fort.jpg',
             gallery: [
                 'https://sunsetmirissa.com/images/Galle-fort/galle-fort-2.jpeg',
                 'https://as1.ftcdn.net/v2/jpg/04/42/31/68/1000_F_442316893_U5Iu78Z0j51ZCAh9ZqKaTwfORS8r26Pr.jpg',
@@ -112,11 +112,11 @@ const HeritageDetail = () => {
         'dambulla-cave': {
             title: 'Dambulla Cave Temple',
             tagline: 'Golden Temple',
-            img: 'https://www.travelmapsrilanka.com/destinations/destinationimages/dambulla-cave-temple.webp',
+            img: '/dambulla_cave.jpg',
             gallery: [
-                'https://www.ancient-origins.net/sites/default/files/styles/article_image/public/field/image/Dambulla-Cave-Temple.jpg?itok=lDoqIakP',
-                'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/17/b5/60/e9/inside-the-second-cave.jpg?w=1200&h=1200&s=1',
-                'https://www.lankatourexperts.com/wp-content/uploads/2018/10/dambulla-cave-temple-3.jpg'
+                '/dambulla_exterior.jpg',
+                '/dambulla_cave.jpg',
+                '/dambulla_reclining_buddha.jpg'
             ],
             location: 'Dambulla',
             era: '1st Century BC',
@@ -181,7 +181,7 @@ const HeritageDetail = () => {
         'anuradhapura': {
             title: 'Ancient City of Anuradhapura',
             tagline: 'First Capital of Sri Lanka',
-            img: 'https://www.rjtravelagency.com/wp-content/uploads/2023/03/Anuradhapura-Ancient-City-2.jpg',
+            img: '/anuradhapura.jpg',
             gallery: [
                 'https://seedevirestaurant.com/wp-content/uploads/2023/09/Ruwanweli-Maha-Seya.webp',
                 'https://lkgetaways.com/static/uploads/Avukana-Buddha-Statue-Anuradhapua-Ancinet-City.webp',

@@ -217,6 +217,21 @@ const initializeDB = async () => {
             )
         `);
 
+        // Ratings & Feedback Table
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS ratings (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NULL,
+                item_type VARCHAR(50) DEFAULT 'platform',
+                item_id INT NULL,
+                item_name VARCHAR(255) NULL,
+                rating INT NOT NULL,
+                feedback TEXT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        `);
+
         // Ensure Supplier linkage columns exist for existing databases
         try { await connection.query("ALTER TABLE hotels ADD COLUMN supplier_id INT, ADD FOREIGN KEY (supplier_id) REFERENCES users(id) ON DELETE SET NULL"); } catch (e) { }
         try { await connection.query("ALTER TABLE tour_guides ADD COLUMN supplier_id INT, ADD FOREIGN KEY (supplier_id) REFERENCES users(id) ON DELETE SET NULL"); } catch (e) { }
@@ -342,29 +357,21 @@ app.get('/api/trips/user/:id', (req, res) => {
     });
 });
 
-// Booking Routes
-app.post('/api/bookings/create', (req, res) => {
-    const { user_id, trip_id, item_type, item_name, item_id, price } = req.body;
-    const sql = "INSERT INTO bookings (user_id, trip_id, item_type, item_name, item_id, price) VALUES (?, ?, ?, ?, ?, ?)";
-    db.query(sql, [user_id, trip_id, item_type, item_name, item_id, price], (err, result) => {
+// Ratings & Review Routes
+app.post('/api/ratings/submit', (req, res) => {
+    const { user_id, item_type, item_id, item_name, rating, feedback } = req.body;
+    const sql = "INSERT INTO ratings (user_id, item_type, item_id, item_name, rating, feedback) VALUES (?, ?, ?, ?, ?, ?)";
+    db.query(sql, [user_id || null, item_type || 'platform', item_id || null, item_name || 'TravelGuider Platform', rating, feedback || ''], (err, result) => {
         if (err) return res.status(500).json({ message: err.message });
-        res.status(201).json({ message: 'Booking created successfully', bookingId: result.insertId });
+        res.status(201).json({ message: 'Rating submitted successfully', ratingId: result.insertId });
     });
 });
 
-app.get('/api/bookings/user/:id', (req, res) => {
-    const sql = "SELECT * FROM bookings WHERE user_id = ? ORDER BY booking_date DESC";
-    db.query(sql, [req.params.id], (err, results) => {
+app.get('/api/ratings/stats', (req, res) => {
+    const sql = "SELECT AVG(rating) as avg_rating, COUNT(*) as total_ratings FROM ratings";
+    db.query(sql, (err, results) => {
         if (err) return res.status(500).json({ message: err.message });
-        res.json(results);
-    });
-});
-
-app.get('/api/bookings/my', authenticateToken, (req, res) => {
-    const sql = "SELECT * FROM bookings WHERE user_id = ? ORDER BY booking_date DESC";
-    db.query(sql, [req.user.id], (err, results) => {
-        if (err) return res.status(500).json({ message: err.message });
-        res.json(results);
+        res.json(results[0] || { avg_rating: 4.9, total_ratings: 0 });
     });
 });
 
@@ -544,35 +551,56 @@ app.post('/api/trips/generate', async (req, res) => {
         }
 
         // 8. Calculate Costs
-        const hotelPrice = parseFloat(selectedHotel.price_range ? (selectedHotel.price_range.split('-')[0] || 0) : 100);
-        const hotelCost = hotelPrice * days;
+        const parseHotelRate = (h) => {
+            if (!h) return 180;
+            const priceVal = String(h.price_range || h.price || '');
+            const parsed = parseFloat(priceVal.replace(/[^0-9.]/g, ''));
+            if (!isNaN(parsed) && parsed > 0) return parsed;
+            if (priceVal.includes('$')) {
+                const dollars = (priceVal.match(/\$/g) || []).length;
+                if (dollars >= 4) return 240;
+                if (dollars === 3) return 150;
+                if (dollars === 2) return 85;
+                return 50;
+            }
+            const cat = String(h.category || '').toLowerCase();
+            if (cat.includes('5-star') || cat.includes('luxury') || cat.includes('resort')) return 220;
+            if (cat.includes('heritage') || cat.includes('boutique')) return 130;
+            if (cat.includes('mid') || cat.includes('eco')) return 90;
+            return 65;
+        };
+
+        const hotelPrice = parseHotelRate(selectedHotel);
+        const hotelCost = Math.round(hotelPrice * days);
 
         let guideCost = 0;
         if (selectedGuide) {
-            guideCost = (parseFloat(selectedGuide.daily_rate_lkr) || 0) * days;
-            // Convert LKR to USD approx if needed, but keeping simple for now or assuming the budget input is compatible. 
-            // The prompt used $5000 budget so we might need rate conversion, but for now let's treat values as is or assume USD for simplicity 
-            // OR dividing by ~300 for LKR->USD. Let's assume database stores LKR and we convert to USD approx.
-            guideCost = guideCost / 300;
+            const rawRate = parseFloat(selectedGuide.daily_rate_lkr) || 12000;
+            guideCost = Math.round((rawRate * days) / 300);
+        } else {
+            guideCost = Math.round(days * 35);
         }
 
         let transportCost = 0;
         if (selectedTransport) {
             const rateStr = selectedTransport.daily_rate_range ? selectedTransport.daily_rate_range.split('-')[0] : '0';
-            transportCost = (parseFloat(rateStr) || 50) * days; // detailed transport cost
+            const parsedTrans = parseFloat(rateStr.replace(/[^0-9.]/g, '')) || 65;
+            transportCost = Math.round(parsedTrans * days);
         } else {
-            transportCost = days * 50; // default fallback
+            transportCost = Math.round(days * 65);
         }
 
-        const activitiesCost = itinerary.reduce((total, day) => {
+        let activitiesCost = itinerary.reduce((total, day) => {
             let dCost = 0;
-            if (day.morning?.entryFee) dCost += parseFloat(day.morning.entryFee);
-            if (day.afternoon?.entryFee) dCost += parseFloat(day.afternoon.entryFee);
-            if (day.evening?.entryFee) dCost += parseFloat(day.evening.entryFee);
+            if (day.morning?.entryFee) dCost += parseFloat(day.morning.entryFee) || 0;
+            if (day.afternoon?.entryFee) dCost += parseFloat(day.afternoon.entryFee) || 0;
+            if (day.evening?.entryFee) dCost += parseFloat(day.evening.entryFee) || 0;
             return total + dCost;
         }, 0) * (travelers || 1);
 
-        const totalEstimated = hotelCost + transportCost + activitiesCost + guideCost;
+        if (activitiesCost <= 0) activitiesCost = Math.round(days * 25 * (travelers || 1));
+
+        const totalEstimated = Math.round(hotelCost + transportCost + activitiesCost + guideCost);
 
         const responseData = {
             destination: district.district_name,
@@ -954,6 +982,20 @@ app.delete('/api/guides/:id', authenticateToken, isAdmin, (req, res) => {
     db.query(sql, [req.params.id], (err, result) => {
         if (err) return res.status(500).json({ message: err.message });
         res.json({ message: 'Guide deleted successfully' });
+    });
+});
+
+// Admin Dynamic Price & Seasonal Rate Update Endpoint
+app.put('/api/admin/price-update', authenticateToken, isAdmin, (req, res) => {
+    const { table, id, priceField, idField, newPrice } = req.body;
+    const allowedTables = ['hotels', 'tour_guides', 'transportation', 'tourist_places'];
+    if (!allowedTables.includes(table)) {
+        return res.status(400).json({ message: 'Invalid entity table' });
+    }
+    const sql = `UPDATE ${table} SET ${priceField} = ? WHERE ${idField} = ?`;
+    db.query(sql, [newPrice, id], (err, result) => {
+        if (err) return res.status(500).json({ message: err.message });
+        res.json({ message: `Price updated successfully to ${newPrice}` });
     });
 });
 

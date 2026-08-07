@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
-import { Share2, Download, Clock, MapPin, LayoutList, ArrowRight, Plus, Building2, UserCheck, Car, Users, Sparkles, Camera, Coffee } from 'lucide-react';
+import { Share2, Download, Clock, MapPin, LayoutList, ArrowRight, Plus, Building2, UserCheck, Car, Users, Sparkles, Camera, Coffee, SlidersHorizontal, CheckCircle2, AlertCircle, Zap, BedDouble, ChevronDown, Award, RefreshCw, Phone, Mail, Globe, ExternalLink, Star, Wifi, Info } from 'lucide-react';
 import PriceDisplay from '../components/PriceDisplay';
 import PaymentModal from '../components/PaymentModal';
 
@@ -19,6 +19,29 @@ const Itinerary = () => {
     const [loading, setLoading] = React.useState(true);
     const [selectedDetail, setSelectedDetail] = React.useState(null);
     const [showPaymentModal, setShowPaymentModal] = React.useState(false);
+
+    // Target Budget and Hotel Customization State
+    const targetBudget = Number(itineraryData?.budget) || 3500;
+    const [hotelTier, setHotelTier] = React.useState('luxury'); // 'luxury', 'mid-range', 'budget'
+    const [customHotel, setCustomHotel] = React.useState(null);
+    const [transportTier, setTransportTier] = React.useState('chauffeur'); // 'chauffeur', 'shuttle', 'budget'
+
+    // Direct Contact Rating State
+    const [selectedStarRating, setSelectedStarRating] = React.useState(5);
+    const [feedbackText, setFeedbackText] = React.useState('');
+    const [ratingSubmitted, setRatingSubmitted] = React.useState(false);
+
+    const hotelTierRates = {
+        luxury: 220,
+        'mid-range': 95,
+        budget: 45
+    };
+
+    const transportTierRates = {
+        chauffeur: 65,
+        shuttle: 35,
+        budget: 15
+    };
 
     React.useEffect(() => {
         const fetchRecommendations = async () => {
@@ -60,6 +83,46 @@ const Itinerary = () => {
     }
 
     const { destination, days, travelers, hotel, costs, itinerary, startDate, guide, transport } = itineraryData;
+
+    // Ensure all investment summary values are non-zero numbers and dynamically update
+    const daysNum = Math.max(1, Number(days) || 1);
+    const travelersNum = Math.max(1, Number(travelers) || 1);
+
+    const activeHotelName = customHotel?.hotel_name || hotel?.name || (hotelTier === 'luxury' ? '5-Star Luxury Resort' : hotelTier === 'mid-range' ? 'Heritage & Boutique Hotel' : 'Comfort Budget Inn');
+
+    const currentHotelNightRate = customHotel?.price 
+        ? (parseFloat(String(customHotel.price).replace(/[^0-9.]/g, '')) || hotelTierRates[hotelTier])
+        : hotelTierRates[hotelTier];
+
+    const computedHotelCost = Math.round(currentHotelNightRate * daysNum);
+    const computedTransportCost = Math.round(transportTierRates[transportTier] * daysNum);
+    const computedGuideCost = guide ? Math.round(daysNum * 40) : Math.round(daysNum * 25);
+    const computedActivitiesCost = (costs?.activities && Number(costs.activities) > 0) 
+        ? Number(costs.activities) 
+        : Math.round(daysNum * 25 * travelersNum);
+
+    const computedTotalCost = computedHotelCost + computedTransportCost + computedGuideCost + computedActivitiesCost;
+
+    // Platform Service Fee (3% Convenience & Instant Protection Fee for online booking)
+    const platformFeeAmount = computedTotalCost * 0.03;
+    const totalPayableWithFee = computedTotalCost + platformFeeAmount;
+
+    const isOverBudget = computedTotalCost > targetBudget;
+    const budgetVariance = targetBudget - computedTotalCost;
+
+    // Auto-fit function to adjust stay tier to fit target budget
+    const handleAutoFitBudget = () => {
+        if (computedTotalCost <= targetBudget) return;
+        setCustomHotel(null);
+        if (hotelTier === 'luxury') {
+            setHotelTier('mid-range');
+        } else if (hotelTier === 'mid-range') {
+            setHotelTier('budget');
+            setTransportTier('shuttle');
+        } else {
+            setTransportTier('budget');
+        }
+    };
 
     const formatDate = (dateStr) => {
         const date = new Date(dateStr);
@@ -108,7 +171,7 @@ const Itinerary = () => {
                     item_type: 'hotel',
                     item_name: hotel?.name || 'Travel Package',
                     item_id: null,
-                    price: costs.total,
+                    price: computedTotalCost,
                     status: 'upcoming',
                     payment_status: paymentInfo.payment_status,
                     payment_method: paymentInfo.payment_method,
@@ -229,6 +292,140 @@ const Itinerary = () => {
                                     </p>
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Hotel Stay & Budget Customizer */}
+                        <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-[2.5rem] p-6 md:p-8 text-white shadow-2xl relative overflow-hidden border border-white/10">
+                            <div className="relative z-10 space-y-6">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-primary/20 text-primary-light rounded-xl flex items-center justify-center border border-primary/30">
+                                            <SlidersHorizontal size={20} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-black tracking-tight text-white">Customizer: Stay Tier & Budget</h3>
+                                            <p className="text-xs text-white/60 font-medium">Adjust accommodation tier to match your target budget</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] font-black text-white/50 uppercase tracking-widest">Target Budget:</span>
+                                        <PriceDisplay amount={targetBudget} from="USD" className="text-emerald-400 text-lg font-black" />
+                                    </div>
+                                </div>
+
+                                {/* Hotel Tier Buttons */}
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black text-white/50 uppercase tracking-widest flex items-center gap-2">
+                                        <BedDouble size={14} className="text-primary-light" /> Select Hotel Category & Comfort Level
+                                    </label>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                        {[
+                                            { id: 'luxury', label: '5-Star Luxury', price: '$220/night', desc: 'Resorts & Villas', icon: '👑' },
+                                            { id: 'mid-range', label: 'Middle Class', price: '$95/night', desc: 'Heritage & Boutique', icon: '🏨' },
+                                            { id: 'budget', label: 'Budget Stay', price: '$45/night', desc: 'Comfort Guest Inn', icon: '🏡' }
+                                        ].map((tier) => {
+                                            const isSelected = hotelTier === tier.id && !customHotel;
+                                            return (
+                                                <button
+                                                    key={tier.id}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setHotelTier(tier.id);
+                                                        setCustomHotel(null);
+                                                    }}
+                                                    className={`p-4 rounded-2xl border text-left transition-all relative overflow-hidden flex flex-col justify-between ${
+                                                        isSelected
+                                                            ? 'bg-primary border-primary text-white shadow-lg shadow-primary/30 ring-2 ring-primary/40'
+                                                            : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:border-white/20'
+                                                    }`}
+                                                >
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <span className="text-xl">{tier.icon}</span>
+                                                        <span className="text-xs font-black tracking-tight opacity-90">{tier.price}</span>
+                                                    </div>
+                                                    <div>
+                                                        <h5 className="font-extrabold text-sm leading-tight">{tier.label}</h5>
+                                                        <p className="text-[10px] font-medium opacity-70 mt-0.5">{tier.desc}</p>
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* Hotel Selection Dropdown if District Hotels Available */}
+                                {recommendations.hotels.length > 0 && (
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-white/50 uppercase tracking-widest">
+                                            Or Choose Specific Hotel in {destination}:
+                                        </label>
+                                        <div className="relative">
+                                            <select
+                                                value={customHotel?.hotel_id || ''}
+                                                onChange={(e) => {
+                                                    const selected = recommendations.hotels.find(h => h.hotel_id === parseInt(e.target.value));
+                                                    setCustomHotel(selected || null);
+                                                }}
+                                                className="w-full bg-white/10 border border-white/20 rounded-xl py-3 pl-4 pr-10 text-white font-bold text-xs outline-none focus:bg-white/20 focus:border-primary appearance-none cursor-pointer"
+                                            >
+                                                <option value="" className="bg-slate-900 text-white">Default Category Selected ({activeHotelName})</option>
+                                                {recommendations.hotels.map(h => (
+                                                    <option key={h.hotel_id} value={h.hotel_id} className="bg-slate-900 text-white">
+                                                        {h.hotel_name} — {h.category} ({h.city})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none" />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Hotel Contact Quick Action */}
+                                <div className="pt-1 flex items-center justify-between border-t border-white/10">
+                                    <span className="text-[10px] font-bold text-white/50">Active Hotel: <strong className="text-white">{activeHotelName}</strong></span>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const h = customHotel || recommendations.hotels.find(x => x.hotel_name === activeHotelName) || {
+                                                hotel_name: activeHotelName,
+                                                category: hotelTier === 'luxury' ? '5-Star Luxury Resort' : hotelTier === 'mid-range' ? 'Middle Class' : 'Budget Inn',
+                                                city: destination,
+                                                contact_number: '+94 91 223 4000',
+                                                email: `info@${activeHotelName.toLowerCase().replace(/[^a-z0-9]/g, '')}.lk`,
+                                                website: `www.${activeHotelName.toLowerCase().replace(/[^a-z0-9]/g, '')}.lk`,
+                                                address: `${destination}, Sri Lanka`,
+                                                rating: 4.9,
+                                                amenities: 'Free High-Speed WiFi, Infinity Pool, Ocean View, Breakfast Included, Air Conditioning, Spa & Wellness, Room Service'
+                                            };
+                                            setSelectedDetail({ type: 'hotel', data: h });
+                                        }}
+                                        className="text-xs font-black text-emerald-400 hover:text-emerald-300 flex items-center gap-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 px-3 py-1.5 rounded-lg border border-emerald-500/30 transition-all"
+                                    >
+                                        <Phone size={13} /> View Phone, Email & Details
+                                    </button>
+                                </div>
+
+                                {/* Auto-Fit Alert banner if over budget */}
+                                {isOverBudget && (
+                                    <div className="p-4 bg-amber-500/20 border border-amber-500/30 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-amber-200">
+                                        <div className="flex items-center gap-3">
+                                            <AlertCircle size={20} className="text-amber-400 flex-shrink-0" />
+                                            <div>
+                                                <p className="text-xs font-bold">Total cost exceeds your ${targetBudget.toLocaleString()} target budget!</p>
+                                                <p className="text-[10px] text-amber-300/80">Adjust hotel category above or auto-fit below to lower total cost.</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={handleAutoFitBudget}
+                                            className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-lg transition-all flex items-center gap-1.5 flex-shrink-0"
+                                        >
+                                            <Zap size={14} /> Auto-Fit Budget
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="absolute top-0 right-0 w-48 h-48 bg-primary/10 rounded-full blur-[60px] pointer-events-none"></div>
                         </div>
 
                         <div className="space-y-6">
@@ -353,19 +550,27 @@ const Itinerary = () => {
                                                         Elite Stays <span className="h-px flex-1 bg-slate-100"></span>
                                                     </h4>
                                                     <div className="space-y-3">
-                                                        {recommendations.hotels.slice(0, 2).map(hotel => (
+                                                        {recommendations.hotels.slice(0, 3).map(hotel => (
                                                             <div key={hotel.hotel_id} className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 hover:bg-white hover:shadow-lg transition-all group">
                                                                 <div className="flex justify-between items-start mb-1">
                                                                     <h5 className="font-bold text-gray-900 text-sm group-hover:text-primary transition-colors">{hotel.hotel_name}</h5>
-                                                                    <PriceDisplay amount={parseFloat(hotel.price_range?.split('-')[0] || 0)} from="USD" className="text-[10px] text-secondary" />
+                                                                    <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">{hotel.category}</span>
                                                                 </div>
-                                                                <p className="text-[10px] text-secondary font-black uppercase tracking-widest mb-3">{hotel.category}</p>
-                                                                <button
-                                                                    onClick={() => handleBookItem('hotel', hotel.hotel_name, 0, hotel.hotel_id)}
-                                                                    className="w-full py-2 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-primary transition-all shadow-sm"
-                                                                >
-                                                                    Reserve
-                                                                </button>
+                                                                <p className="text-[10px] text-gray-400 font-bold mb-3">{hotel.city || hotel.address}</p>
+                                                                <div className="grid grid-cols-2 gap-2">
+                                                                    <button
+                                                                        onClick={() => setSelectedDetail({ type: 'hotel', data: hotel })}
+                                                                        className="py-2 bg-white text-slate-700 text-[10px] font-black uppercase tracking-wider rounded-lg border border-slate-200 hover:bg-slate-100 transition-all flex items-center justify-center gap-1 shadow-2xs"
+                                                                    >
+                                                                        <Info size={12} className="text-primary" /> Contact & Details
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => setCustomHotel(hotel)}
+                                                                        className="py-2 bg-slate-900 text-white text-[10px] font-black uppercase tracking-wider rounded-lg hover:bg-primary transition-all shadow-sm"
+                                                                    >
+                                                                        Select Hotel
+                                                                    </button>
+                                                                </div>
                                                             </div>
                                                         ))}
                                                     </div>
@@ -429,31 +634,69 @@ const Itinerary = () => {
 
                         <div className="glass p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden border border-white group">
                             <div className="relative z-10 flex flex-col items-center text-center">
-                                <div className="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-emerald-200 mb-6 transform group-hover:rotate-[360deg] transition-transform duration-1000">
+                                <div className="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-emerald-200 mb-4 transform group-hover:rotate-[360deg] transition-transform duration-1000">
                                     <LayoutList size={24} />
                                 </div>
-                                <h3 className="text-2xl font-black text-gray-900 tracking-tight mb-6">Investment Summary</h3>
+                                <h3 className="text-2xl font-black text-gray-900 tracking-tight mb-1">Investment Summary</h3>
+                                <p className="text-xs text-gray-400 font-bold mb-6">Real-time Cost & Budget Tracking</p>
+
+                                {/* Target Budget vs Actual Cost Comparison Banner */}
+                                <div className="w-full bg-slate-50 p-4 rounded-2xl border border-slate-100 mb-6 space-y-2 text-left">
+                                    <div className="flex justify-between items-center text-xs font-bold text-gray-500">
+                                        <span>Target Budget Choice:</span>
+                                        <PriceDisplay amount={targetBudget} from="USD" className="text-gray-900 font-black text-sm" />
+                                    </div>
+                                    <div className="flex justify-between items-center text-xs font-bold text-gray-500">
+                                        <span>Current Trip Total:</span>
+                                        <PriceDisplay amount={computedTotalCost} from="USD" className="text-primary font-black text-base" />
+                                    </div>
+                                    <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
+                                        <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">Budget Match:</span>
+                                        {isOverBudget ? (
+                                            <span className="bg-red-100 text-red-700 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full flex items-center gap-1">
+                                                <AlertCircle size={12} /> Over by <PriceDisplay amount={Math.abs(budgetVariance)} from="USD" />
+                                            </span>
+                                        ) : (
+                                            <span className="bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full flex items-center gap-1">
+                                                <CheckCircle2 size={12} /> Within Budget (<PriceDisplay amount={budgetVariance} from="USD" /> Saved)
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
 
                                 <div className="w-full space-y-4 mb-8">
                                     <div className="flex justify-between items-center text-gray-400 font-black text-[10px] uppercase tracking-[0.2em] border-b border-slate-100 pb-3">
-                                        <span>Luxury Stays</span>
-                                        <PriceDisplay amount={costs.hotel} from="USD" className="text-gray-900 text-base" />
+                                        <div className="text-left">
+                                            <span>Luxury / Selected Stay</span>
+                                            <span className="text-[9px] text-primary block capitalize font-bold">{activeHotelName}</span>
+                                        </div>
+                                        <PriceDisplay amount={computedHotelCost} from="USD" className="text-gray-900 text-base" />
                                     </div>
                                     <div className="flex justify-between items-center text-gray-400 font-black text-[10px] uppercase tracking-[0.2em] border-b border-slate-100 pb-3">
                                         <span>Elite Transport</span>
-                                        <PriceDisplay amount={costs.transport} from="USD" className="text-gray-900 text-base" />
+                                        <PriceDisplay amount={computedTransportCost} from="USD" className="text-gray-900 text-base" />
                                     </div>
                                     <div className="flex justify-between items-center text-gray-400 font-black text-[10px] uppercase tracking-[0.2em] border-b border-slate-100 pb-3">
                                         <span>Expert Guide</span>
-                                        <PriceDisplay amount={costs.guide || 0} from="USD" className="text-gray-900 text-base" />
+                                        <PriceDisplay amount={computedGuideCost} from="USD" className="text-gray-900 text-base" />
                                     </div>
                                     <div className="flex justify-between items-center text-gray-400 font-black text-[10px] uppercase tracking-[0.2em] border-b border-slate-100 pb-3">
                                         <span>Bespoke Experiences</span>
-                                        <PriceDisplay amount={costs.activities} from="USD" className="text-gray-900 text-base" />
+                                        <PriceDisplay amount={computedActivitiesCost} from="USD" className="text-gray-900 text-base" />
+                                    </div>
+                                    <div className="flex justify-between items-center text-emerald-600 font-black text-[10px] uppercase tracking-[0.2em] border-b border-emerald-100/60 pb-3 bg-emerald-50/50 p-2.5 rounded-xl">
+                                        <div className="text-left">
+                                            <span>Platform Reservation & Guarantee Fee</span>
+                                            <span className="text-[9px] text-emerald-500 block font-bold">Instant Confirmation (3%)</span>
+                                        </div>
+                                        <PriceDisplay amount={platformFeeAmount} from="USD" className="text-emerald-700 text-sm font-black" />
                                     </div>
                                     <div className="flex justify-between items-center pt-2">
-                                        <span className="text-gray-900 font-black text-xl tracking-tighter uppercase">Total Experience</span>
-                                        <PriceDisplay amount={costs.total} from="USD" className="text-3xl text-primary" />
+                                        <div className="text-left">
+                                            <span className="text-gray-900 font-black text-xl tracking-tighter uppercase block">Total Payable</span>
+                                            <span className="text-[10px] text-gray-400 font-bold">(Trip Total + Platform Protection)</span>
+                                        </div>
+                                        <PriceDisplay amount={totalPayableWithFee} from="USD" className="text-3xl text-primary font-black" />
                                     </div>
                                 </div>
 
@@ -479,17 +722,26 @@ const Itinerary = () => {
                     <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md animate-fade-in" onClick={() => setSelectedDetail(null)}></div>
                     <div className="relative glass w-full max-w-lg rounded-[2.5rem] shadow-2xl border border-white/50 overflow-hidden animate-zoom-in">
                         <div className="p-8">
-                            <div className="flex justify-between items-start mb-8">
+                            <div className="flex justify-between items-start mb-6">
                                 <div className="flex items-center gap-4">
-                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-xl ${selectedDetail.type === 'guide' ? 'bg-primary shadow-primary/20' : 'bg-secondary shadow-secondary/20'}`}>
-                                        {selectedDetail.type === 'guide' ? <UserCheck size={28} /> : <Car size={28} />}
+                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-xl ${
+                                        selectedDetail.type === 'hotel' ? 'bg-emerald-600 shadow-emerald-200' :
+                                        selectedDetail.type === 'guide' ? 'bg-primary shadow-primary/20' : 'bg-secondary shadow-secondary/20'
+                                    }`}>
+                                        {selectedDetail.type === 'hotel' ? <Building2 size={28} /> :
+                                         selectedDetail.type === 'guide' ? <UserCheck size={28} /> : <Car size={28} />}
                                     </div>
                                     <div>
-                                        <p className={`text-[10px] font-black uppercase tracking-[0.3em] mb-1 ${selectedDetail.type === 'guide' ? 'text-primary' : 'text-secondary'}`}>
-                                            {selectedDetail.type === 'guide' ? 'Personal Guide Detail' : 'Transport Service Detail'}
+                                        <p className={`text-[10px] font-black uppercase tracking-[0.3em] mb-1 ${
+                                            selectedDetail.type === 'hotel' ? 'text-emerald-600' :
+                                            selectedDetail.type === 'guide' ? 'text-primary' : 'text-secondary'
+                                        }`}>
+                                            {selectedDetail.type === 'hotel' ? 'Hotel & Accommodation Details' :
+                                             selectedDetail.type === 'guide' ? 'Personal Guide Detail' : 'Transport Service Detail'}
                                         </p>
                                         <h3 className="text-2xl font-black text-gray-900 tracking-tight">
-                                            {selectedDetail.type === 'guide' ? selectedDetail.data.name : selectedDetail.data.vehicle}
+                                            {selectedDetail.type === 'hotel' ? (selectedDetail.data.hotel_name || selectedDetail.data.name) :
+                                             selectedDetail.type === 'guide' ? selectedDetail.data.name : selectedDetail.data.vehicle}
                                         </h3>
                                     </div>
                                 </div>
@@ -498,48 +750,240 @@ const Itinerary = () => {
                                 </button>
                             </div>
 
-                            <div className="space-y-6">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="p-5 bg-slate-50 rounded-3xl border border-slate-100">
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
-                                            {selectedDetail.type === 'guide' ? 'Languages' : 'Company'}
-                                        </p>
-                                        <p className="font-bold text-gray-900 text-sm">
-                                            {selectedDetail.type === 'guide' ? selectedDetail.data.languages : selectedDetail.data.company}
-                                        </p>
-                                    </div>
-                                    <div className="p-5 bg-slate-50 rounded-3xl border border-slate-100">
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
-                                            {selectedDetail.type === 'guide' ? 'Daily Rate' : 'Service Type'}
-                                        </p>
-                                        <p className="font-bold text-gray-900 text-sm">
-                                            {selectedDetail.type === 'guide' ? `LKR ${selectedDetail.data.rate?.toLocaleString()}` : selectedDetail.data.type}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="p-6 bg-slate-900 rounded-[2rem] text-white shadow-xl shadow-slate-200">
-                                    <div className="flex items-center justify-between mb-4">
+                            {selectedDetail.type === 'hotel' ? (
+                                <div className="space-y-6">
+                                    <div className="p-5 bg-slate-50 rounded-3xl border border-slate-100 flex items-center justify-between">
                                         <div>
-                                            <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Direct Contact</p>
-                                            <p className="text-xl font-black tracking-tight">{selectedDetail.data.contact || '+94 77 123 4567'}</p>
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Category & Location</p>
+                                            <h4 className="font-bold text-gray-900 text-sm">{selectedDetail.data.category || 'Luxury Accommodation'}</h4>
+                                            <p className="text-[10px] text-gray-500 font-medium mt-0.5">{selectedDetail.data.city || selectedDetail.data.address || destination}</p>
                                         </div>
-                                        <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center text-white backdrop-blur-lg">
-                                            <Clock size={24} />
+                                        <div className="text-right">
+                                            <span className="text-amber-500 text-sm font-black flex items-center gap-1">
+                                                <Star size={16} fill="currentColor" /> {selectedDetail.data.rating || '4.8'} / 5
+                                            </span>
+                                            <span className="text-[10px] text-emerald-600 font-bold block mt-1">Verified Property</span>
                                         </div>
                                     </div>
-                                    <p className="text-[10px] text-white/60 font-medium leading-relaxed">
-                                        Feel free to coordinate directly with your {selectedDetail.type === 'guide' ? 'guide' : 'transport provider'} to customize your pickup times and specific requirements.
-                                    </p>
-                                </div>
-                            </div>
 
-                            <button
-                                onClick={() => setSelectedDetail(null)}
-                                className={`w-full mt-8 py-4 rounded-xl font-black text-white shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] ${selectedDetail.type === 'guide' ? 'bg-primary shadow-primary/20 hover:bg-primary-hover' : 'bg-secondary shadow-secondary/20 hover:bg-secondary/90'}`}
-                            >
-                                Back to Itinerary
-                            </button>
+                                    {/* Direct Contact Channels Card with Mandatory Rating Prompt */}
+                                    <div className="p-6 bg-slate-900 rounded-[2rem] text-white shadow-xl space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <h5 className="text-xs font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2">
+                                                <Phone size={14} /> Direct Hotel Contact Channels
+                                            </h5>
+                                            <span className="text-[10px] font-extrabold text-amber-400 bg-amber-400/10 px-2.5 py-0.5 rounded-full border border-amber-400/20">
+                                                FREE Direct Access
+                                            </span>
+                                        </div>
+
+                                        {!ratingSubmitted ? (
+                                            <div className="p-4 bg-white/5 border border-white/10 rounded-2xl space-y-3">
+                                                <div className="flex items-center justify-between">
+                                                    <p className="text-xs font-bold text-slate-200">⭐ Rate Your Platform Experience to Unlock Contact Info:</p>
+                                                </div>
+                                                <div className="flex items-center gap-2 justify-center py-1">
+                                                    {[1, 2, 3, 4, 5].map((star) => (
+                                                        <button
+                                                            key={star}
+                                                            type="button"
+                                                            onClick={() => setSelectedStarRating(star)}
+                                                            className="p-1 hover:scale-125 transition-transform"
+                                                        >
+                                                            <Star
+                                                                size={24}
+                                                                className={star <= selectedStarRating ? 'text-amber-400 fill-amber-400' : 'text-slate-600'}
+                                                            />
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                                <input
+                                                    type="text"
+                                                    value={feedbackText}
+                                                    onChange={(e) => setFeedbackText(e.target.value)}
+                                                    placeholder="Optional review note (e.g. Helpful recommendations!)..."
+                                                    className="w-full bg-white/10 border border-white/15 rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/40 focus:outline-none focus:border-emerald-400 font-medium"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={async () => {
+                                                        setRatingSubmitted(true);
+                                                        try {
+                                                            const user = JSON.parse(localStorage.getItem('user') || '{}');
+                                                            await fetch('/api/ratings/submit', {
+                                                                method: 'POST',
+                                                                headers: { 'Content-Type': 'application/json' },
+                                                                body: JSON.stringify({
+                                                                    user_id: user.id || null,
+                                                                    item_type: 'hotel',
+                                                                    item_id: selectedDetail?.data?.hotel_id || null,
+                                                                    item_name: selectedDetail?.data?.hotel_name || 'Selected Stay',
+                                                                    rating: selectedStarRating,
+                                                                    feedback: feedbackText
+                                                                })
+                                                            });
+                                                        } catch (err) {
+                                                            console.error('Rating submit error:', err);
+                                                        }
+                                                    }}
+                                                    className="w-full py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all"
+                                                >
+                                                    Submit Rating & Unlock Direct Contact
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-3 animate-fade-in">
+                                                <div className="p-2.5 bg-emerald-500/20 border border-emerald-500/30 rounded-xl flex items-center gap-2 text-emerald-300 text-xs font-bold">
+                                                    <CheckCircle2 size={16} className="text-emerald-400 flex-shrink-0" />
+                                                    <span>Thank you for rating ({selectedStarRating}★)! Direct contact channels unlocked free.</span>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                                                    <a
+                                                        href={`tel:${selectedDetail.data.contact_number || '+94912234000'}`}
+                                                        className="p-3 bg-white/10 hover:bg-white/20 rounded-2xl flex items-center gap-3 border border-white/10 transition-all group"
+                                                    >
+                                                        <div className="w-9 h-9 bg-emerald-500 rounded-xl flex items-center justify-center text-white flex-shrink-0 shadow-lg shadow-emerald-500/20">
+                                                            <Phone size={18} />
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <span className="text-[9px] font-black text-white/50 uppercase tracking-widest block">Call Direct</span>
+                                                            <span className="text-xs font-bold text-white truncate block">{selectedDetail.data.contact_number || '+94 91 223 4000'}</span>
+                                                        </div>
+                                                    </a>
+
+                                                    <a
+                                                        href={`mailto:${selectedDetail.data.email || `info@${(selectedDetail.data.hotel_name || 'hotel').toLowerCase().replace(/[^a-z0-9]/g, '')}.lk`}`}
+                                                        className="p-3 bg-white/10 hover:bg-white/20 rounded-2xl flex items-center gap-3 border border-white/10 transition-all group"
+                                                    >
+                                                        <div className="w-9 h-9 bg-blue-500 rounded-xl flex items-center justify-center text-white flex-shrink-0 shadow-lg shadow-blue-500/20">
+                                                            <Mail size={18} />
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <span className="text-[9px] font-black text-white/50 uppercase tracking-widest block">Send Email</span>
+                                                            <span className="text-xs font-bold text-white truncate block">{selectedDetail.data.email || 'info@hotel.lk'}</span>
+                                                        </div>
+                                                    </a>
+                                                </div>
+
+                                                {selectedDetail.data.website && (
+                                                    <a
+                                                        href={selectedDetail.data.website.startsWith('http') ? selectedDetail.data.website : `https://${selectedDetail.data.website}`}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="p-3 bg-white/5 hover:bg-white/10 rounded-2xl flex items-center justify-between border border-white/10 transition-all text-xs font-bold text-emerald-400"
+                                                    >
+                                                        <span className="flex items-center gap-2">
+                                                            <Globe size={16} /> Official Website ({selectedDetail.data.website})
+                                                        </span>
+                                                        <ExternalLink size={14} />
+                                                    </a>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Amenities */}
+                                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                            <Wifi size={12} className="text-emerald-500" /> Featured Amenities & Services
+                                        </p>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {(selectedDetail.data.amenities || 'Free High-Speed WiFi, Swimming Pool, Ocean View, Breakfast Included, Air Conditioning, Spa & Wellness, Room Service')
+                                                .split(',')
+                                                .map((item, idx) => (
+                                                    <span key={idx} className="bg-white border border-slate-200 text-slate-700 text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-2xs">
+                                                        ✓ {item.trim()}
+                                                    </span>
+                                                ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-3 pt-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setCustomHotel(selectedDetail.data);
+                                                setSelectedDetail(null);
+                                            }}
+                                            className="flex-1 py-3.5 bg-emerald-600 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all"
+                                        >
+                                            Select Hotel For Trip
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setSelectedDetail(null);
+                                                navigate(`/hotel/${encodeURIComponent(selectedDetail.data.hotel_name || selectedDetail.data.name)}`);
+                                            }}
+                                            className="px-4 py-3.5 bg-slate-100 text-slate-700 font-bold text-xs rounded-xl hover:bg-slate-200 transition-all flex items-center gap-1.5"
+                                        >
+                                            <ExternalLink size={14} /> Full Page
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="p-5 bg-slate-50 rounded-3xl border border-slate-100">
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                                                {selectedDetail.type === 'guide' ? 'Languages' : 'Company'}
+                                            </p>
+                                            <p className="font-bold text-gray-900 text-sm">
+                                                {selectedDetail.type === 'guide' ? selectedDetail.data.languages : selectedDetail.data.company}
+                                            </p>
+                                        </div>
+                                        <div className="p-5 bg-slate-50 rounded-3xl border border-slate-100">
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                                                {selectedDetail.type === 'guide' ? 'Daily Rate' : 'Service Type'}
+                                            </p>
+                                            <p className="font-bold text-gray-900 text-sm">
+                                                {selectedDetail.type === 'guide' ? `LKR ${selectedDetail.data.rate?.toLocaleString()}` : selectedDetail.data.type}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-6 bg-slate-900 rounded-[2rem] text-white shadow-xl space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Direct Verified Contact</p>
+                                                <p className="text-xl font-black tracking-tight">{selectedDetail.data.contact || '+94 77 312 4890'}</p>
+                                            </div>
+                                            <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
+                                                <Phone size={20} />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/10">
+                                            <a
+                                                href={`tel:${selectedDetail.data.contact || '+94 77 312 4890'}`}
+                                                className="py-3 px-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[11px] font-black uppercase tracking-wider rounded-xl flex items-center justify-center gap-1.5 shadow-md transition-all text-center"
+                                            >
+                                                <Phone size={14} /> Call Now
+                                            </a>
+                                            <a
+                                                href={`https://wa.me/${(selectedDetail.data.contact || '94773124890').replace(/[^0-9]/g, '')}?text=Hello,%20I%20am%20coordinating%20my%20trip%20via%20Smart%20Travel%20Guider.`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="py-3 px-4 bg-teal-500 hover:bg-teal-400 text-slate-950 text-[11px] font-black uppercase tracking-wider rounded-xl flex items-center justify-center gap-1.5 shadow-md transition-all text-center"
+                                            >
+                                                <MessageSquare size={14} /> WhatsApp
+                                            </a>
+                                        </div>
+
+                                        <p className="text-[10px] text-white/60 font-medium leading-relaxed">
+                                            Feel free to coordinate directly with your {selectedDetail.type === 'guide' ? 'certified guide' : 'transport dispatch'} to customize pickup locations, flight arrival times, or special requests.
+                                        </p>
+                                    </div>
+
+                                    <button
+                                        onClick={() => setSelectedDetail(null)}
+                                        className={`w-full mt-6 py-4 rounded-xl font-black text-white shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] ${selectedDetail.type === 'guide' ? 'bg-primary shadow-primary/20 hover:bg-primary-hover' : 'bg-secondary shadow-secondary/20 hover:bg-secondary/90'}`}
+                                    >
+                                        Back to Itinerary
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -550,7 +994,9 @@ const Itinerary = () => {
                 isOpen={showPaymentModal}
                 onClose={() => setShowPaymentModal(false)}
                 bookingDetails={{
-                    totalAmount: costs.total,
+                    totalAmount: totalPayableWithFee,
+                    baseAmount: computedTotalCost,
+                    platformFee: platformFeeAmount,
                     destination: destination,
                     days: days,
                     travelers: travelers

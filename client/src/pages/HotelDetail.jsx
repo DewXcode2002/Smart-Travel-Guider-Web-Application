@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
-import { Star, MapPin, Wifi, Wind, Coffee, Waves, Car, Utensils, Dumbbell, ArrowLeft, Calendar, Users, Check, X } from 'lucide-react';
+import { Star, MapPin, Wifi, Wind, Coffee, Waves, Car, Utensils, Dumbbell, ArrowLeft, Calendar, Users, Check, X, Phone, Mail, MessageSquare, CheckCircle2, Sparkles, CreditCard, ShieldCheck, Clock } from 'lucide-react';
 import PriceDisplay from '../components/PriceDisplay';
 
 const HotelDetail = () => {
@@ -10,6 +10,87 @@ const HotelDetail = () => {
     const [checkIn, setCheckIn] = useState('');
     const [checkOut, setCheckOut] = useState('');
     const [guests, setGuests] = useState(2);
+
+    // Instant Hotel Booking Modal state
+    const [showBookingModal, setShowBookingModal] = useState(false);
+    const [guestName, setGuestName] = useState('');
+    const [guestPhone, setGuestPhone] = useState('');
+    const [paymentMethod, setPaymentMethod] = useState('credit_card');
+    const [specialRequests, setSpecialRequests] = useState('');
+    const [isSubmittingBooking, setIsSubmittingBooking] = useState(false);
+
+    // Direct Contact Modal state
+    const [showContactModal, setShowContactModal] = useState(false);
+    const [contactStarRating, setContactStarRating] = useState(5);
+    const [contactFeedback, setContactFeedback] = useState('');
+    const [contactUnlocked, setContactUnlocked] = useState(false);
+
+    const getHotelContact = (hotelObj) => {
+        if (!hotelObj) return { phone: '+94 11 254 1010', email: 'information@gallefacehotel.net', whatsapp: 'https://wa.me/94112541010' };
+        const hotelContacts = {
+            'Shangri-La Colombo': { phone: '+94 11 788 8288', email: 'slcb.reservations@shangri-la.com' },
+            'Cinnamon Grand Colombo': { phone: '+94 11 243 7437', email: 'grand.res@cinnamonhotels.com' },
+            'Galle Face Hotel': { phone: '+94 11 254 1010', email: 'information@gallefacehotel.net' },
+            'Cinnamon Red Colombo': { phone: '+94 11 214 5145', email: 'red.res@cinnamonhotels.com' },
+            'Clock Inn Colombo': { phone: '+94 11 250 8260', email: 'colombo@clockinn.lk' },
+            'Jetwing Beach Negombo': { phone: '+94 31 227 3500', email: 'resv.beach@jetwinghotels.com' },
+            'Jetwing Blue Negombo': { phone: '+94 31 227 9000', email: 'resv.blue@jetwinghotels.com' },
+            'Camelot Beach Hotel': { phone: '+94 31 223 3369', email: 'info@camelot.lk' },
+            'Anantara Kalutara Resort': { phone: '+94 34 222 0222', email: 'kalutara.resort@anantara.com' },
+            'Avani Kalutara Resort': { phone: '+94 34 492 2222', email: 'kalutara@avanihotels.com' },
+            'Cinnamon Citadel Kandy': { phone: '+94 81 223 4365', email: 'citadel.res@cinnamonhotels.com' },
+            "Earl's Regency Kandy": { phone: '+94 81 242 2122', email: 'resv@aitkenspence.lk' },
+            'Kandy City Stay': { phone: '+94 81 220 2200', email: 'info@kandycitystay.com' },
+            'Heritance Kandalama': { phone: '+94 66 555 5000', email: 'kandalama@heritancehotels.com' },
+            'Hotel Sigiriya': { phone: '+94 66 228 6821', email: 'resv.sigiriya@serendibleisure.com' },
+            'Grand Hotel Nuwara Eliya': { phone: '+94 52 222 2881', email: 'info@grandhotel.lk' },
+            "Jetwing St. Andrew's": { phone: '+94 52 222 2241', email: 'resv.standrews@jetwinghotels.com' },
+            'Amangalla': { phone: '+94 91 223 4000', email: 'amangalla@aman.com' },
+            'Jetwing Lighthouse': { phone: '+94 91 222 3744', email: 'resv.lighthouse@jetwinghotels.com' },
+            'Tamarind Hill Galle': { phone: '+94 91 222 6800', email: 'reservations@tamarindhill.lk' },
+            'Zostel Galle': { phone: '+94 91 438 0500', email: 'galle@zostel.com' },
+            'Cape Weligama': { phone: '+94 41 740 0000', email: 'reservations@resplendentceylon.com' },
+            'Mandara Resort Mirissa': { phone: '+94 41 225 3999', email: 'info@mandararesort.com' },
+            'Anantara Peace Haven Tangalle': { phone: '+94 47 748 8888', email: 'tangalle@anantara.com' },
+            'Jetwing Yala': { phone: '+94 47 223 9444', email: 'resv.yala@jetwinghotels.com' },
+            'Jetwing Jaffna': { phone: '+94 21 211 7100', email: 'resv.jaffna@jetwinghotels.com' },
+            'Jaffna Heritage Hotel': { phone: '+94 21 222 1222', email: 'info@jaffnaheritage.com' },
+            'The Thinnai Jaffna': { phone: '+94 21 203 0400', email: 'reservations@thethinnai.com' },
+            'Iranamadu Heritage Resort': { phone: '+94 21 228 5000', email: 'info@iranamaduheritage.lk' },
+            'Shell Coast Resort Mannar': { phone: '+94 23 222 3000', email: 'reservations@shellcoastmannar.lk' },
+            'Hotel Birunthavan': { phone: '+94 24 222 2555', email: 'info@birunthavanhotel.com' },
+            'Maritimepattu Beach Lodge': { phone: '+94 21 229 0100', email: 'info@maritimepattulodge.lk' },
+            'Amaya Beach Pasikuda': { phone: '+94 65 205 0000', email: 'reservations@amayabeach.com' },
+            'Sunrise by Jetwing Pasikuda': { phone: '+94 65 205 0800', email: 'resv.sunrise@jetwinghotels.com' },
+            'Jetwing Surf Arugam Bay': { phone: '+94 63 205 0000', email: 'resv.surf@jetwinghotels.com' },
+            'Hideaway Resort Arugam Bay': { phone: '+94 63 224 8246', email: 'info@hideawayarugambay.com' },
+            'Uga Jungle Beach Trincomalee': { phone: '+94 26 225 1000', email: 'junglebeach@ugaescapes.com' },
+            'Trinco Blu by Cinnamon': { phone: '+94 26 222 2307', email: 'trincoblu.res@cinnamonhotels.com' },
+            'Elephant Rock Hotel Kurunegala': { phone: '+94 37 222 4100', email: 'info@elephantrockhotel.lk' },
+            'Bar Reef Resort Kalpitiya': { phone: '+94 32 226 0500', email: 'info@barreefresort.com' },
+            'Ulagalla by Uga Escapes': { phone: '+94 25 205 0000', email: 'ulagalla@ugaescapes.com' },
+            'Palm Garden Village Hotel': { phone: '+94 25 222 3961', email: 'palmgarden@sltnet.lk' },
+            'Ekho Lake House Polonnaruwa': { phone: '+94 27 222 2222', email: 'lakehouse@ekhohotels.com' },
+            'Hotel Sudu Araliya': { phone: '+94 27 222 2011', email: 'info@hotelsuduaraliya.com' },
+            '98 Acres Resort & Spa Ella': { phone: '+94 57 205 0050', email: 'info@resort98acres.com' },
+            '98 Acres Resort & Spa': { phone: '+94 57 205 0050', email: 'info@resort98acres.com' },
+            'Melheim Resort Haputale': { phone: '+94 57 226 8055', email: 'info@melheimresorts.com' },
+            'Hangover Hostels Ella': { phone: '+94 57 222 8800', email: 'ella@hangoverhostels.com' },
+            'Mandara Rosen Kataragama': { phone: '+94 47 223 5220', email: 'info@mandararosen.com' },
+            'Centauria Hill Resort': { phone: '+94 45 222 2844', email: 'centauriahill@sltnet.lk' },
+            'Elephant Bay Hotel Pinnawala': { phone: '+94 35 226 6755', email: 'info@elephantbayhotel.com' }
+        };
+        const found = hotelContacts[hotelObj.name] || {
+            phone: hotelObj.contact_number || '+94 11 254 1010',
+            email: hotelObj.email || `info@${hotelObj.name.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`
+        };
+        const waNumber = found.phone.replace(/[^0-9]/g, '');
+        return {
+            phone: found.phone,
+            email: found.email,
+            whatsapp: `https://wa.me/${waNumber}?text=Hello%20${encodeURIComponent(hotelObj.name)},%20I%20would%20like%20to%20inquire%20about%20room%20availability%20via%20Smart%20Travel%20Guider.`
+        };
+    };
 
     // Comprehensive hotel data
     const hotelsData = {
@@ -49,7 +130,7 @@ const HotelDetail = () => {
             price: 220,
             rating: 4.9,
             reviews: 850,
-            image: 'https://mysrilankaholidays.com/hotelguide/wp-content/uploads/2009/04/Heritance-Kandalama-Hotel-Sri-Lanka-Holidays.jpg',
+            image: 'https://www.myboutiquehotel.com/photos/113791/heritance-kandalama-sigiriya-002-72093-1110x700.jpg',
             gallery: [
                 'https://www.myboutiquehotel.com/photos/113791/heritance-kandalama-sigiriya-002-72093-1110x700.jpg',
                 'https://www.remotelands.com/storage/media/1114/conversions/b130716023-banner-size.jpg',
@@ -186,6 +267,35 @@ const HotelDetail = () => {
                 checkIn: '2:00 PM',
                 checkOut: '12:00 PM',
                 cancellation: 'Free cancellation up to 72 hours before check-in',
+                children: 'Children welcome',
+                pets: 'Pets not allowed'
+            }
+        },
+        'jaffna-heritage-hotel': {
+            name: 'Jaffna Heritage Hotel',
+            location: 'Jaffna, Sri Lanka',
+            price: 110,
+            rating: 4.7,
+            reviews: 430,
+            image: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/33054198.jpg?k=b4e3347b59b1faeb7c53d0e98031575e92750e38680bc9b37a3bd4755106190f&o=&hp=1',
+            gallery: [
+                'https://cf.bstatic.com/xdata/images/hotel/max1024x768/33054198.jpg?k=b4e3347b59b1faeb7c53d0e98031575e92750e38680bc9b37a3bd4755106190f&o=&hp=1',
+                'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&q=80&w=800',
+                'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800'
+            ],
+            description: 'Situated in the sacred cultural heart of Nallur, Jaffna Heritage Hotel offers a peaceful sanctuary with traditional Tamil-colonial hospitality, a sparkling outdoor pool, and authentic pure vegetarian cuisine near the Nallur Kovil.',
+            amenities: ['wifi', 'ac', 'restaurant', 'pool', 'parking'],
+            features: [
+                'Traditional Tamil-colonial architecture',
+                'Pure vegetarian heritage restaurant',
+                'Outdoor swimming pool and garden',
+                'Walking distance to Nallur Kandaswamy Kovil',
+                'Cultural tour desk & transport services'
+            ],
+            policies: {
+                checkIn: '2:00 PM',
+                checkOut: '12:00 PM',
+                cancellation: 'Free cancellation up to 24 hours before check-in',
                 children: 'Children welcome',
                 pets: 'Pets not allowed'
             }
@@ -449,11 +559,60 @@ const HotelDetail = () => {
 
     const handleBooking = () => {
         if (!checkIn || !checkOut) {
-            alert('Please select check-in and check-out dates');
+            alert('Please select both check-in and check-out dates first.');
             return;
         }
-        // Navigate to plan trip with hotel details
-        navigate('/plan-trip', { state: { hotel: hotel.name, checkIn, checkOut, guests } });
+        const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+        setGuestName(`${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() || 'Valued Guest');
+        setGuestPhone(currentUser.phone || '+94 77 123 4567');
+        setShowBookingModal(true);
+    };
+
+    const handleConfirmBooking = async (e) => {
+        e.preventDefault();
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert('Please login to complete your hotel booking.');
+            navigate('/login');
+            return;
+        }
+
+        setIsSubmittingBooking(true);
+        const nights = Math.max(1, Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24)));
+        const totalPrice = hotel.price * nights;
+
+        try {
+            const res = await fetch('/api/bookings/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    item_type: 'hotel',
+                    item_id: hotel.hotel_id || hotel.id || 1,
+                    item_name: hotel.name,
+                    start_date: checkIn,
+                    end_date: checkOut,
+                    total_price: totalPrice,
+                    notes: `Guests: ${guests} | Name: ${guestName} | Contact: ${guestPhone} | Payment: ${paymentMethod} | Special: ${specialRequests}`
+                })
+            });
+
+            if (res.ok) {
+                setShowBookingModal(false);
+                alert(`🎉 Booking Confirmed! Your reservation for ${hotel.name} (${nights} night${nights > 1 ? 's' : ''}) has been successfully saved to your account.`);
+                navigate('/bookings');
+            } else {
+                const err = await res.json();
+                alert(`Booking failed: ${err.message || 'Server error'}`);
+            }
+        } catch (error) {
+            console.error('Booking submission error:', error);
+            alert('Booking failed due to network error.');
+        } finally {
+            setIsSubmittingBooking(false);
+        }
     };
 
     if (loading) {
@@ -638,17 +797,306 @@ const HotelDetail = () => {
                                 </div>
                             </div>
 
-                            <button
-                                onClick={handleBooking}
-                                className="w-full bg-primary text-white font-black py-4 px-6 rounded-2xl hover:bg-primary-hover transition-all shadow-lg shadow-primary/25 mb-3"
-                            >
-                                Book Now
-                            </button>
-                            <p className="text-center text-xs text-gray-400 font-medium">You won't be charged yet</p>
+                            <div className="space-y-3 mb-3">
+                                <button
+                                    onClick={handleBooking}
+                                    className="w-full bg-primary text-white font-black py-4 px-6 rounded-2xl hover:bg-primary-hover transition-all shadow-lg shadow-primary/25"
+                                >
+                                    Book Now
+                                </button>
+
+                                <button
+                                    onClick={() => {
+                                        setShowContactModal(true);
+                                        setContactUnlocked(false);
+                                        setContactStarRating(5);
+                                        setContactFeedback('');
+                                    }}
+                                    className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black text-xs uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 shadow-lg transition-all"
+                                >
+                                    <Phone size={16} /> Direct Contact Hotel
+                                </button>
+                            </div>
+                            <p className="text-center text-xs text-gray-400 font-medium">Instant direct phone & email support available</p>
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* Direct Contact Modal */}
+            {showContactModal && hotel && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
+                    <div className="bg-slate-900 text-white rounded-[2.5rem] border border-white/20 p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-6 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+                        
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <span className="bg-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-emerald-500/30 inline-flex items-center gap-1 mb-2">
+                                    <Sparkles size={12} /> Direct Contact Unlock
+                                </span>
+                                <h3 className="text-2xl font-black tracking-tight">{hotel.name}</h3>
+                                <p className="text-xs text-gray-400 font-medium flex items-center gap-1 mt-1">
+                                    <MapPin size={12} className="text-amber-400" /> {hotel.location}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setShowContactModal(false)}
+                                className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        {!contactUnlocked ? (
+                            <div className="space-y-4 bg-white/5 border border-white/10 p-5 rounded-2xl">
+                                <div className="text-center space-y-1">
+                                    <h4 className="text-xs font-black uppercase tracking-widest text-amber-300">Rate Platform Experience</h4>
+                                    <p className="text-[11px] text-gray-300">Please provide a quick star rating to instantly unlock direct phone & email details.</p>
+                                </div>
+
+                                <div className="flex justify-center gap-2 py-1">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <button
+                                            key={star}
+                                            type="button"
+                                            onClick={() => setContactStarRating(star)}
+                                            className="hover:scale-125 transition-transform"
+                                        >
+                                            <Star
+                                                size={28}
+                                                className={star <= contactStarRating ? 'fill-amber-400 text-amber-400' : 'text-white/30'}
+                                            />
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <input
+                                    type="text"
+                                    value={contactFeedback}
+                                    onChange={(e) => setContactFeedback(e.target.value)}
+                                    placeholder="Optional note (e.g. Great luxury stays!)..."
+                                    className="w-full bg-white/10 border border-white/15 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-white/40 focus:outline-none focus:border-emerald-400 font-medium"
+                                />
+
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        setContactUnlocked(true);
+                                        try {
+                                            const user = JSON.parse(localStorage.getItem('user') || '{}');
+                                            await fetch('/api/ratings/submit', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({
+                                                    user_id: user.id || null,
+                                                    item_type: 'hotel',
+                                                    item_id: hotel.hotel_id || hotel.id || null,
+                                                    item_name: hotel.name,
+                                                    rating: contactStarRating,
+                                                    feedback: contactFeedback
+                                                })
+                                            });
+                                        } catch (err) {
+                                            console.error('Rating submit error:', err);
+                                        }
+                                    }}
+                                    className="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all"
+                                >
+                                    Submit Rating & Unlock Direct Contact
+                                </button>
+                            </div>
+                        ) : (() => {
+                            const contactInfo = getHotelContact(hotel);
+                            return (
+                                <div className="space-y-4 animate-fade-in">
+                                    <div className="p-3 bg-emerald-500/20 border border-emerald-500/30 rounded-2xl flex items-center gap-2.5 text-emerald-300 text-xs font-bold">
+                                        <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0" />
+                                        <span>Rating submitted ({contactStarRating}★)! Direct channels unlocked.</span>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <a
+                                            href={`tel:${contactInfo.phone}`}
+                                            className="p-4 bg-white/10 hover:bg-white/20 rounded-2xl flex items-center justify-between border border-white/10 transition-all group"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
+                                                    <Phone size={20} />
+                                                </div>
+                                                <div>
+                                                    <span className="text-[9px] font-black text-white/50 uppercase tracking-widest block">Call Direct Reception</span>
+                                                    <span className="text-sm font-bold text-white">{contactInfo.phone}</span>
+                                                </div>
+                                            </div>
+                                            <span className="text-xs font-black text-emerald-400 uppercase tracking-wider">Call Now →</span>
+                                        </a>
+
+                                        <a
+                                            href={contactInfo.whatsapp}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="p-4 bg-white/10 hover:bg-white/20 rounded-2xl flex items-center justify-between border border-white/10 transition-all group"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-teal-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-teal-500/20">
+                                                    <MessageSquare size={20} />
+                                                </div>
+                                                <div>
+                                                    <span className="text-[9px] font-black text-white/50 uppercase tracking-widest block">WhatsApp Reservations</span>
+                                                    <span className="text-sm font-bold text-white">Chat on WhatsApp</span>
+                                                </div>
+                                            </div>
+                                            <span className="text-xs font-black text-teal-400 uppercase tracking-wider">Open Chat →</span>
+                                        </a>
+
+                                        <a
+                                            href={`mailto:${contactInfo.email}`}
+                                            className="p-4 bg-white/10 hover:bg-white/20 rounded-2xl flex items-center justify-between border border-white/10 transition-all group"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                                                    <Mail size={20} />
+                                                </div>
+                                                <div>
+                                                    <span className="text-[9px] font-black text-white/50 uppercase tracking-widest block">Email Reservations</span>
+                                                    <span className="text-sm font-bold text-white truncate max-w-[200px] block">{contactInfo.email}</span>
+                                                </div>
+                                            </div>
+                                            <span className="text-xs font-black text-blue-400 uppercase tracking-wider">Send Email →</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            );
+                        })()}
+                    </div>
+                </div>
+            )}
+
+            {/* Instant Hotel Booking Modal */}
+            {showBookingModal && hotel && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
+                    <div className="bg-slate-900 text-white rounded-[2.5rem] border border-white/20 p-6 sm:p-8 max-w-xl w-full shadow-2xl space-y-6 relative max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <span className="bg-primary/20 text-primary-light text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-primary/30 inline-flex items-center gap-1 mb-2">
+                                    <ShieldCheck size={12} /> Instant Hotel Reservation
+                                </span>
+                                <h3 className="text-2xl font-black tracking-tight">{hotel.name}</h3>
+                                <p className="text-xs text-gray-400 font-medium flex items-center gap-1 mt-1">
+                                    <MapPin size={12} className="text-amber-400" /> {hotel.location}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setShowBookingModal(false)}
+                                className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        {/* Booking Summary Box */}
+                        <div className="bg-white/5 border border-white/10 p-5 rounded-2xl space-y-3">
+                            <div className="grid grid-cols-2 gap-4 text-xs">
+                                <div>
+                                    <span className="text-gray-400 font-bold uppercase tracking-wider block text-[10px]">Check-In</span>
+                                    <span className="font-black text-white text-sm">{checkIn}</span>
+                                </div>
+                                <div>
+                                    <span className="text-gray-400 font-bold uppercase tracking-wider block text-[10px]">Check-Out</span>
+                                    <span className="font-black text-white text-sm">{checkOut}</span>
+                                </div>
+                            </div>
+                            <div className="h-px bg-white/10 w-full" />
+                            <div className="flex justify-between items-center text-xs">
+                                <span className="text-gray-300 font-medium">Rate per night</span>
+                                <span className="font-bold text-white">${hotel.price} USD</span>
+                            </div>
+                            <div className="flex justify-between items-center text-xs">
+                                <span className="text-gray-300 font-medium">Nights & Guests</span>
+                                <span className="font-bold text-white">
+                                    {Math.max(1, Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24)))} Night(s) • {guests} Guest(s)
+                                </span>
+                            </div>
+                            <div className="h-px bg-white/10 w-full" />
+                            <div className="flex justify-between items-center">
+                                <span className="text-sm font-black uppercase tracking-wider text-amber-300">Total Price</span>
+                                <span className="text-2xl font-black text-emerald-400">
+                                    ${hotel.price * Math.max(1, Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24)))} USD
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Guest Details Form */}
+                        <form onSubmit={handleConfirmBooking} className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-black text-gray-300 uppercase tracking-wider mb-1">Lead Guest Full Name</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={guestName}
+                                    onChange={(e) => setGuestName(e.target.value)}
+                                    placeholder="Enter your full name"
+                                    className="w-full bg-white/10 border border-white/15 rounded-xl px-4 py-3 text-xs text-white placeholder-white/40 focus:outline-none focus:border-primary font-medium"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-black text-gray-300 uppercase tracking-wider mb-1">Contact Phone Number</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={guestPhone}
+                                    onChange={(e) => setGuestPhone(e.target.value)}
+                                    placeholder="+94 77 123 4567"
+                                    className="w-full bg-white/10 border border-white/15 rounded-xl px-4 py-3 text-xs text-white placeholder-white/40 focus:outline-none focus:border-primary font-medium"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-black text-gray-300 uppercase tracking-wider mb-1">Payment Guarantee Method</label>
+                                <select
+                                    value={paymentMethod}
+                                    onChange={(e) => setPaymentMethod(e.target.value)}
+                                    className="w-full bg-slate-800 border border-white/15 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-primary font-medium cursor-pointer"
+                                >
+                                    <option value="credit_card">💳 Credit Card (Instant Guarantee)</option>
+                                    <option value="debit_card">💳 Debit Card</option>
+                                    <option value="paypal">🌐 PayPal</option>
+                                    <option value="bank_transfer">🏦 Direct Bank Transfer</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-black text-gray-300 uppercase tracking-wider mb-1">Special Requests (Optional)</label>
+                                <input
+                                    type="text"
+                                    value={specialRequests}
+                                    onChange={(e) => setSpecialRequests(e.target.value)}
+                                    placeholder="e.g. High floor, airport pickup..."
+                                    className="w-full bg-white/10 border border-white/15 rounded-xl px-4 py-3 text-xs text-white placeholder-white/40 focus:outline-none focus:border-primary font-medium"
+                                />
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={isSubmittingBooking}
+                                className="w-full py-4 bg-gradient-to-r from-primary to-blue-600 hover:from-primary-hover hover:to-blue-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                {isSubmittingBooking ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                        Processing Reservation...
+                                    </>
+                                ) : (
+                                    <>
+                                        <CheckCircle2 size={16} /> Confirm & Reserve Hotel Now
+                                    </>
+                                )}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
         </MainLayout>
     );
 };
