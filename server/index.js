@@ -50,28 +50,35 @@ const isAdmin = (req, res, next) => {
     });
 };
 
+const isCloudDb = process.env.DB_HOST && process.env.DB_HOST !== 'localhost' && process.env.DB_HOST !== '127.0.0.1';
+
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'travelguider',
-  port: process.env.DB_PORT || 3306,
+  port: Number(process.env.DB_PORT) || 3306,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  ssl: { rejectUnauthorized: false }
+  ...(isCloudDb ? { ssl: { rejectUnauthorized: false } } : {})
 });
 
 // Helper to initialize DB and tables
 const initializeDB = async () => {
-  const connection = mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    port: Number(process.env.DB_PORT) || 22011,
-    ssl: { rejectUnauthorized: false }
-  }).promise();
+  if (!process.env.DB_HOST && !process.env.DB_USER) {
+    console.log("No cloud DB credentials provided in env. Skipping cloud auto-migration.");
+    return;
+  }
+  try {
+    const connection = mysql.createConnection({
+      host: process.env.DB_HOST || 'localhost',
+      user: process.env.DB_USER || 'root',
+      password: process.env.DB_PASSWORD || '',
+      database: process.env.DB_NAME || 'travelguider',
+      port: Number(process.env.DB_PORT) || 3306,
+      ...(isCloudDb ? { ssl: { rejectUnauthorized: false } } : {})
+    }).promise();
 
     try {
        // await connection.query("CREATE DATABASE IF NOT EXISTS travelguider");
