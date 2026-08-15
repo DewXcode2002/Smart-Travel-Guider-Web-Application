@@ -1,6 +1,3 @@
-CREATE DATABASE IF NOT EXISTS travelguider;
-USE travelguider;
-
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -47,7 +44,7 @@ CREATE TABLE IF NOT EXISTS bookings (
     FOREIGN KEY (trip_id) REFERENCES trips(id) ON DELETE SET NULL
 );
 
---Districts Table
+-- Districts Table
 CREATE TABLE districts (
     district_id INT PRIMARY KEY AUTO_INCREMENT,
     district_name VARCHAR(50) NOT NULL UNIQUE,
