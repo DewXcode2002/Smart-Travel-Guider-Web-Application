@@ -25,6 +25,25 @@ app.use((req, res, next) => {
     next();
 });
 
+// Health check endpoint to diagnose Vercel DB connection status
+app.get('/api/health', (req, res) => {
+    pool.query('SELECT 1', (err, results) => {
+        if (err) {
+            return res.status(500).json({
+                status: 'ERROR',
+                message: 'Database connection failed',
+                error: err.message,
+                dbHost: process.env.DB_HOST || 'localhost (default)'
+            });
+        }
+        res.json({
+            status: 'OK',
+            message: 'Server and Database are connected successfully!',
+            dbHost: process.env.DB_HOST
+        });
+    });
+});
+
 // --- AUTHENTICATION MIDDLEWARE ---
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
@@ -309,7 +328,7 @@ app.post('/api/auth/login', (req, res) => {
     db.query(sql, [email], async (err, results) => {
         if (err) {
             console.error('Database error during login:', err);
-            return res.status(500).json({ message: 'Internal server error during database query' });
+            return res.status(500).json({ message: `Database error: ${err.message || 'Failed to connect to database'}` });
         }
 
         if (results.length === 0) {
