@@ -25,8 +25,24 @@ app.use((req, res, next) => {
     next();
 });
 
+const isCloudDb = process.env.DB_HOST && process.env.DB_HOST !== 'localhost' && process.env.DB_HOST !== '127.0.0.1';
+
+const pool = mysql.createPool({
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'travelguider',
+  port: Number(process.env.DB_PORT) || 3306,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  ...(isCloudDb ? { ssl: { rejectUnauthorized: false } } : {})
+});
+
+const db = pool;
+
 // Health check endpoint to diagnose Vercel DB connection status
-app.get('/api/health', (req, res) => {
+app.get(['/api/health', '/health'], (req, res) => {
     pool.query('SELECT 1', (err, results) => {
         if (err) {
             return res.status(500).json({
@@ -68,20 +84,6 @@ const isAdmin = (req, res, next) => {
         next();
     });
 };
-
-const isCloudDb = process.env.DB_HOST && process.env.DB_HOST !== 'localhost' && process.env.DB_HOST !== '127.0.0.1';
-
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'travelguider',
-  port: Number(process.env.DB_PORT) || 3306,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-  ...(isCloudDb ? { ssl: { rejectUnauthorized: false } } : {})
-});
 
 // Helper to initialize DB and tables
 const initializeDB = async () => {
@@ -280,9 +282,7 @@ try {
     }
 };
 
-initializeDB();
-
-const db = pool;
+initializeDB().catch(err => console.error("Non-fatal DB initialization error:", err));
 
 // Auth Routes
 app.post('/api/auth/register', async (req, res) => {
