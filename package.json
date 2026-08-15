@@ -4,6 +4,7 @@
     "description": "Full-stack TravelGuider application (React + Node + MySQL)",
     "main": "server/index.js",
     "scripts": {
+        "build": "cd client && npm install && npm run build",
         "install-all": "npm install && cd client && npm install && cd ../server && npm install",
         "client": "cd client && npm run dev",
         "server": "cd server && node index.js",
