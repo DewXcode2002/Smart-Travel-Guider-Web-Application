@@ -1,17 +1,26 @@
 {
-    "name": "travelguider-monorepo",
-    "version": "1.0.0",
-    "description": "Full-stack TravelGuider application (React + Node + MySQL)",
-    "main": "server/index.js",
-    "scripts": {
-        "build": "cd client && npm install && npm run build",
-        "install-all": "npm install && cd client && npm install && cd ../server && npm install",
-        "client": "cd client && npm run dev",
-        "server": "cd server && node index.js",
-        "dev": "concurrently \"npm run server\" \"npm run client\"",
-        "start": "npm run dev"
-    },
-    "devDependencies": {
-        "concurrently": "^8.2.2"
-    }
+  "name": "travelguider-monorepo",
+  "version": "1.0.0",
+  "description": "Full-stack TravelGuider application (React + Node + MySQL)",
+  "main": "server/index.js",
+  "scripts": {
+    "build": "cd client && npm install && npm run build",
+    "install-all": "npm install && cd client && npm install && cd ../server && npm install",
+    "client": "cd client && npm run dev",
+    "server": "cd server && node index.js",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "start": "npm run dev"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mysql2": "^3.16.2",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
 }
