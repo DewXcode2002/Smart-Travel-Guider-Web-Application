@@ -362,7 +362,13 @@ const HeritageDetail = () => {
                         <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-lg sticky top-8">
                             <h3 className="text-2xl font-black text-gray-900 mb-6">Plan Your Visit</h3>
                             <button
-                                onClick={() => navigate('/plan-trip')}
+                                onClick={() => navigate('/plan-trip', {
+                                    state: {
+                                        districtId: heritage.districtId,
+                                        destinationName: heritage.title,
+                                        location: heritage.location
+                                    }
+                                })}
                                 className="w-full bg-primary text-white font-black py-4 px-6 rounded-2xl hover:bg-primary-hover transition-all shadow-lg shadow-primary/25 mb-3"
                             >
                                 Add to Trip Plan

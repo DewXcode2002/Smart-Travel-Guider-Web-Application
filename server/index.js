@@ -422,8 +422,8 @@ const query = (sql, params) => {
 };
 
 app.post('/api/trips/generate', async (req, res) => {
-    const { districtId, startDate, endDate, travelers, budget, interests } = req.body;
-    console.log(`Generating itinerary for District: ${districtId}, Interests: ${interests}`);
+    const { districtId, targetPlace, startDate, endDate, travelers, budget, interests } = req.body;
+    console.log(`Generating itinerary for District: ${districtId}, TargetPlace: ${targetPlace}, Interests: ${interests}`);
 
     try {
         // 1. Calculate Days
@@ -470,6 +470,30 @@ app.post('/api/trips/generate', async (req, res) => {
 
         // Shuffle places for randomness
         filteredPlaces.sort(() => 0.5 - Math.random());
+
+        // Prioritize targetPlace if passed (e.g. Nine Arch Bridge, Sigiriya, etc.)
+        if (targetPlace) {
+            const targetLower = targetPlace.toLowerCase().trim();
+            const existingIndex = filteredPlaces.findIndex(p => p.place_name && p.place_name.toLowerCase().includes(targetLower));
+
+            if (existingIndex !== -1) {
+                const [targetObj] = filteredPlaces.splice(existingIndex, 1);
+                filteredPlaces.unshift(targetObj);
+            } else {
+                // If not found in DB places, insert a custom target place entry at the top
+                const customTargetPlace = {
+                    place_id: 99999,
+                    district_id: districtId,
+                    place_name: targetPlace,
+                    category: 'Historical',
+                    description: `Exploration of ${targetPlace} and iconic surrounding scenery.`,
+                    entry_fee_local: 0,
+                    entry_fee_foreign: 0,
+                    opening_hours: '08:00 AM - 06:00 PM'
+                };
+                filteredPlaces.unshift(customTargetPlace);
+            }
+        }
 
         // 5. Select Hotel
         const budgetPerDay = (budget || 1000) / days;

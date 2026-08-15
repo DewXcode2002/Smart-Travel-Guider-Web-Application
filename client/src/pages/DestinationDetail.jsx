@@ -568,8 +568,14 @@ const DestinationDetail = () => {
                             </div>
 
                             <button
-                                onClick={() => navigate('/plan-trip')}
-                                className="w-full bg-primary text-white font-black py-4 px-6 rounded-2xl hover:bg-primary-hover transition-all shadow-lg shadow-primary/25 mb-3"
+                                onClick={() => navigate('/plan-trip', {
+                                    state: {
+                                        districtId: destination.districtId,
+                                        destinationName: destination.name,
+                                        location: destination.location
+                                    }
+                                })}
+                                className="w-full bg-primary text-white font-black py-4 px-6 rounded-2xl hover:bg-primary-hover transition-all shadow-lg shadow-primary/25 mb-3 flex items-center justify-center gap-2"
                             >
                                 Plan Your Trip
                             </button>

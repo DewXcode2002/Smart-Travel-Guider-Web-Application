@@ -1,15 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MainLayout from '../layouts/MainLayout';
-import { Search, Calendar, Users, Camera, MapPin, Coffee, Landmark, Sparkles, ChevronDown, ArrowRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Search, Calendar, Users, Camera, MapPin, Coffee, Landmark, Sparkles, ChevronDown, ArrowRight, X } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const PlanTrip = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     const [districts, setDistricts] = useState([]);
+
+    const preSelectedDistrictId = location.state?.districtId;
+    const preSelectedName = location.state?.destinationName || location.state?.destination || '';
+
     const [formData, setFormData] = useState({
         destination: '',
-        districtId: '',
+        districtId: preSelectedDistrictId || '',
+        targetPlace: preSelectedName,
         startDate: new Date().toISOString().split('T')[0],
         endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         travelers: 2,
@@ -17,18 +23,43 @@ const PlanTrip = () => {
         interests: ['sightseeing']
     });
 
-    React.useEffect(() => {
+    useEffect(() => {
         const fetchDistricts = async () => {
             try {
                 const response = await fetch('/api/districts');
                 if (response.ok) {
                     const data = await response.json();
                     setDistricts(data);
+                    
                     if (data.length > 0) {
+                        let matched = null;
+                        
+                        // 1. Match by district ID
+                        if (preSelectedDistrictId) {
+                            matched = data.find(d => d.district_id === parseInt(preSelectedDistrictId));
+                        }
+
+                        // 2. Fallback: match district name or place location keyword
+                        if (!matched && preSelectedName) {
+                            const nameLower = preSelectedName.toLowerCase();
+                            // Ella -> Badulla district
+                            if (nameLower.includes('ella') || nameLower.includes('nine arch')) {
+                                matched = data.find(d => d.district_name.toLowerCase() === 'badulla');
+                            } else if (nameLower.includes('sigiriya')) {
+                                matched = data.find(d => d.district_name.toLowerCase() === 'matale');
+                            } else {
+                                matched = data.find(d => 
+                                    nameLower.includes(d.district_name.toLowerCase()) ||
+                                    d.district_name.toLowerCase().includes(nameLower)
+                                );
+                            }
+                        }
+
+                        const selected = matched || data[0];
                         setFormData(prev => ({
                             ...prev,
-                            destination: data[0].district_name,
-                            districtId: data[0].district_id
+                            destination: selected.district_name,
+                            districtId: selected.district_id
                         }));
                     }
                 }
@@ -37,7 +68,7 @@ const PlanTrip = () => {
             }
         };
         fetchDistricts();
-    }, []);
+    }, [preSelectedDistrictId, preSelectedName]);
 
     const interests = [
         { id: 'sightseeing', label: 'Sightseeing', icon: Camera },
@@ -113,6 +144,29 @@ const PlanTrip = () => {
                     <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-secondary/5 rounded-full blur-3xl -z-10 animate-pulse-soft" style={{ animationDelay: '1s' }}></div>
 
                     <form onSubmit={handleSubmit} className="glass p-12 rounded-[3.5rem] shadow-premium space-y-12 border border-white/50 backdrop-blur-2xl">
+                        {/* Target Place Customization Badge */}
+                        {formData.targetPlace && (
+                            <div className="bg-primary/10 border border-primary/20 rounded-3xl p-6 flex items-center justify-between animate-fade-in shadow-sm">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-2xl bg-primary text-white flex items-center justify-center font-black shadow-md">
+                                        <Sparkles size={24} />
+                                    </div>
+                                    <div>
+                                        <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em] block">Tailored Itinerary Highlight</span>
+                                        <h4 className="text-lg font-black text-gray-900">Day-by-Day Plan centered around <span className="text-primary font-black">{formData.targetPlace}</span></h4>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData(prev => ({ ...prev, targetPlace: '' }))}
+                                    className="w-10 h-10 rounded-full bg-white/80 hover:bg-white flex items-center justify-center text-gray-400 hover:text-red-500 transition-all border border-gray-100 shadow-sm"
+                                    title="Clear destination highlight"
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+                        )}
+
                         {/* Destination Section */}
                         <div className="space-y-4">
                             <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Where to explore?</label>
