@@ -25,14 +25,20 @@ app.use((req, res, next) => {
     next();
 });
 
-const isCloudDb = process.env.DB_HOST && process.env.DB_HOST !== 'localhost' && process.env.DB_HOST !== '127.0.0.1';
+const DB_HOST = process.env.DB_HOST ? process.env.DB_HOST.trim() : 'localhost';
+const DB_USER = process.env.DB_USER ? process.env.DB_USER.trim() : 'root';
+const DB_PASSWORD = process.env.DB_PASSWORD ? process.env.DB_PASSWORD.trim() : '';
+const DB_NAME = process.env.DB_NAME ? process.env.DB_NAME.trim() : 'travelguider';
+const DB_PORT = process.env.DB_PORT ? Number(process.env.DB_PORT.trim()) : 3306;
+
+const isCloudDb = DB_HOST !== 'localhost' && DB_HOST !== '127.0.0.1';
 
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'travelguider',
-  port: Number(process.env.DB_PORT) || 3306,
+  host: DB_HOST,
+  user: DB_USER,
+  password: DB_PASSWORD,
+  database: DB_NAME,
+  port: DB_PORT,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
@@ -49,13 +55,13 @@ app.get(['/api/health', '/health'], (req, res) => {
                 status: 'ERROR',
                 message: 'Database connection failed',
                 error: err.message,
-                dbHost: process.env.DB_HOST || 'localhost (default)'
+                dbHost: DB_HOST
             });
         }
         res.json({
             status: 'OK',
             message: 'Server and Database are connected successfully!',
-            dbHost: process.env.DB_HOST
+            dbHost: DB_HOST
         });
     });
 });
@@ -94,11 +100,11 @@ const initializeDB = async () => {
   let connection;
   try {
     connection = mysql.createConnection({
-      host: process.env.DB_HOST || 'localhost',
-      user: process.env.DB_USER || 'root',
-      password: process.env.DB_PASSWORD || '',
-      database: process.env.DB_NAME || 'travelguider',
-      port: Number(process.env.DB_PORT) || 3306,
+      host: DB_HOST,
+      user: DB_USER,
+      password: DB_PASSWORD,
+      database: DB_NAME,
+      port: DB_PORT,
       ...(isCloudDb ? { ssl: { rejectUnauthorized: false } } : {})
     }).promise();
        // await connection.query("CREATE DATABASE IF NOT EXISTS travelguider");
