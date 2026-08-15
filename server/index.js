@@ -94,7 +94,12 @@ const initializeDB = async () => {
         `);
 
         // Update role enum if it already exists without 'supplier'
-await connection.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS role ENUM('user', 'admin', 'supplier') DEFAULT 'user'");
+// Update role enum safely (ignore error if already exists)
+try {
+  await connection.query("ALTER TABLE users ADD COLUMN role ENUM('user', 'admin', 'supplier') DEFAULT 'user'");
+} catch (err) {
+  // Column bereits vorhanden හෝ වෙනත් warning එකක් ආවොත් ignore කරයි
+}
 
         // Seed default admin
         const [admins] = await connection.query("SELECT * FROM users WHERE email = 'admin@travelguider.com'");
@@ -1169,25 +1174,29 @@ app.use((err, req, res, next) => {
 });
 
 
-const PORT = 5001;
-const server = app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    // Test database pool connection
-    pool.getConnection((err, conn) => {
-        if (err) {
-            console.error('CRITICAL: Database pool connection failed:', err);
-        } else {
-            console.log('Database pool is ready and connected.');
-            conn.release();
-        }
-    });
-});
+const PORT = process.env.PORT || 5001;
 
-server.on('error', (err) => {
-    if (err.code === 'EADDRINUSE') {
-        console.error(`CRITICAL: Port ${PORT} is already in use.`);
-    } else {
-        console.error('CRITICAL: Server error:', err);
-    }
-    process.exit(1);
-});
+if (require.main === module) {
+    const server = app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+        pool.getConnection((err, conn) => {
+            if (err) {
+                console.error('CRITICAL: Database pool connection failed:', err);
+            } else {
+                console.log('Database pool is ready and connected.');
+                conn.release();
+            }
+        });
+    });
+
+    server.on('error', (err) => {
+        if (err.code === 'EADDRINUSE') {
+            console.error(`CRITICAL: Port ${PORT} is already in use.`);
+        } else {
+            console.error('CRITICAL: Server error:', err);
+        }
+        process.exit(1);
+    });
+}
+
+module.exports = app;
