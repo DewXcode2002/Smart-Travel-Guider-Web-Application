@@ -94,7 +94,7 @@ const initializeDB = async () => {
         `);
 
         // Update role enum if it already exists without 'supplier'
-        await connection.query("ALTER TABLE users MODIFY COLUMN role ENUM('user', 'admin', 'supplier') DEFAULT 'user'");
+await connection.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS role ENUM('user', 'admin', 'supplier') DEFAULT 'user'");
 
         // Seed default admin
         const [admins] = await connection.query("SELECT * FROM users WHERE email = 'admin@travelguider.com'");
