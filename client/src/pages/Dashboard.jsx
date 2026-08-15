@@ -18,24 +18,24 @@ const Dashboard = () => {
         <MainLayout>
             <div className="space-y-10 animate-fade-in">
                 {/* Hero Welcome Section */}
-                <section className="relative h-64 md:h-80 rounded-[3rem] overflow-hidden shadow-2xl group">
+                <section className="relative min-h-[260px] sm:h-72 md:h-80 rounded-[2rem] sm:rounded-[3rem] overflow-hidden shadow-2xl group">
                     <img
                         src="https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?auto=format&fit=crop&q=80&w=1600"
                         className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
                         alt="Sri Lanka Landscape"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent p-12 flex flex-col justify-center">
-                        <span className="text-primary text-[10px] font-black uppercase tracking-[0.3em] mb-4 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full w-fit border border-white/20">
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-transparent p-6 sm:p-10 md:p-12 flex flex-col justify-center">
+                        <span className="text-primary text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] mb-2 sm:mb-4 bg-white/10 backdrop-blur-md px-3.5 py-1 sm:px-4 sm:py-1.5 rounded-full w-fit border border-white/20">
                             Explore Sri Lanka
                         </span>
-                        <h1 className="text-5xl md:text-6xl font-black text-white mb-6 tracking-tight leading-none">
+                        <h1 className="text-3xl sm:text-5xl md:text-6xl font-black text-white mb-4 sm:mb-6 tracking-tight leading-none">
                             Discover Your <span className="text-gradient">Paradise</span>
                         </h1>
                         <button
                             onClick={() => navigate('/plan-trip')}
-                            className="bg-white text-gray-900 font-black py-4 px-10 rounded-2xl w-fit flex items-center gap-3 hover:bg-primary hover:text-white transition-all transform hover:-translate-y-1 shadow-xl"
+                            className="bg-white text-gray-900 font-black py-3 px-6 sm:py-4 sm:px-10 rounded-xl sm:rounded-2xl w-fit flex items-center gap-2.5 text-xs sm:text-sm hover:bg-primary hover:text-white transition-all transform hover:-translate-y-1 shadow-xl"
                         >
-                            Start Your Journey <ArrowRight size={22} />
+                            Start Your Journey <ArrowRight size={18} className="sm:w-5 sm:h-5" />
                         </button>
                     </div>
                 </section>
