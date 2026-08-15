@@ -51,26 +51,31 @@ const isAdmin = (req, res, next) => {
 };
 
 const pool = mysql.createPool({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: 'travelguider', // Pool will connect directly to the DB if it exists
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'travelguider',
+  port: process.env.DB_PORT || 3306,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  ssl: { rejectUnauthorized: false }
 });
 
 // Helper to initialize DB and tables
 const initializeDB = async () => {
-    const connection = mysql.createConnection({
-        host: process.env.DB_HOST || 'localhost',
-        user: process.env.DB_USER || 'root',
-        password: process.env.DB_PASSWORD || ''
-    }).promise();
+  const connection = mysql.createConnection({
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_NAME || 'travelguider',
+    port: process.env.DB_PORT || 3306,
+    ssl: { rejectUnauthorized: false }
+  }).promise();
 
     try {
-        await connection.query("CREATE DATABASE IF NOT EXISTS travelguider");
-        await connection.query("USE travelguider");
+       // await connection.query("CREATE DATABASE IF NOT EXISTS travelguider");
+    // await connection.query("USE travelguider");
 
         // Users table
         await connection.query(`
