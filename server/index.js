@@ -70,8 +70,9 @@ const initializeDB = async () => {
     console.log("No cloud DB credentials provided in env. Skipping cloud auto-migration.");
     return;
   }
+  let connection;
   try {
-    const connection = mysql.createConnection({
+    connection = mysql.createConnection({
       host: process.env.DB_HOST || 'localhost',
       user: process.env.DB_USER || 'root',
       password: process.env.DB_PASSWORD || '',
@@ -79,8 +80,6 @@ const initializeDB = async () => {
       port: Number(process.env.DB_PORT) || 3306,
       ...(isCloudDb ? { ssl: { rejectUnauthorized: false } } : {})
     }).promise();
-
-    try {
        // await connection.query("CREATE DATABASE IF NOT EXISTS travelguider");
     // await connection.query("USE travelguider");
 
