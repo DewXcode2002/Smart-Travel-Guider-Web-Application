@@ -23,48 +23,81 @@ const PlanTrip = () => {
         interests: ['sightseeing']
     });
 
+    const fallbackDistricts = [
+        { district_id: 1, district_name: 'Ampara', province: 'Eastern' },
+        { district_id: 2, district_name: 'Anuradhapura', province: 'North Central' },
+        { district_id: 3, district_name: 'Badulla', province: 'Uva' },
+        { district_id: 4, district_name: 'Batticaloa', province: 'Eastern' },
+        { district_id: 5, district_name: 'Colombo', province: 'Western' },
+        { district_id: 6, district_name: 'Galle', province: 'Southern' },
+        { district_id: 7, district_name: 'Gampaha', province: 'Western' },
+        { district_id: 8, district_name: 'Hambantota', province: 'Southern' },
+        { district_id: 9, district_name: 'Jaffna', province: 'Northern' },
+        { district_id: 10, district_name: 'Kalutara', province: 'Western' },
+        { district_id: 11, district_name: 'Kandy', province: 'Central' },
+        { district_id: 12, district_name: 'Kegalle', province: 'Sabaragamuwa' },
+        { district_id: 13, district_name: 'Kilinochchi', province: 'Northern' },
+        { district_id: 14, district_name: 'Kurunegala', province: 'North Western' },
+        { district_id: 15, district_name: 'Mannar', province: 'Northern' },
+        { district_id: 16, district_name: 'Matale', province: 'Central' },
+        { district_id: 17, district_name: 'Matara', province: 'Southern' },
+        { district_id: 18, district_name: 'Monaragala', province: 'Uva' },
+        { district_id: 19, district_name: 'Mullaitivu', province: 'Northern' },
+        { district_id: 20, district_name: 'Nuwara Eliya', province: 'Central' },
+        { district_id: 21, district_name: 'Polonnaruwa', province: 'North Central' },
+        { district_id: 22, district_name: 'Puttalam', province: 'North Western' },
+        { district_id: 23, district_name: 'Ratnapura', province: 'Sabaragamuwa' },
+        { district_id: 24, district_name: 'Trincomalee', province: 'Eastern' },
+        { district_id: 25, district_name: 'Vavuniya', province: 'Northern' }
+    ];
+
     useEffect(() => {
         const fetchDistricts = async () => {
+            let list = fallbackDistricts;
             try {
                 const response = await fetch('/api/districts');
                 if (response.ok) {
                     const data = await response.json();
-                    setDistricts(data);
-                    
-                    if (data.length > 0) {
-                        let matched = null;
-                        
-                        // 1. Match by district ID
-                        if (preSelectedDistrictId) {
-                            matched = data.find(d => d.district_id === parseInt(preSelectedDistrictId));
-                        }
-
-                        // 2. Fallback: match district name or place location keyword
-                        if (!matched && preSelectedName) {
-                            const nameLower = preSelectedName.toLowerCase();
-                            // Ella -> Badulla district
-                            if (nameLower.includes('ella') || nameLower.includes('nine arch')) {
-                                matched = data.find(d => d.district_name.toLowerCase() === 'badulla');
-                            } else if (nameLower.includes('sigiriya')) {
-                                matched = data.find(d => d.district_name.toLowerCase() === 'matale');
-                            } else {
-                                matched = data.find(d => 
-                                    nameLower.includes(d.district_name.toLowerCase()) ||
-                                    d.district_name.toLowerCase().includes(nameLower)
-                                );
-                            }
-                        }
-
-                        const selected = matched || data[0];
-                        setFormData(prev => ({
-                            ...prev,
-                            destination: selected.district_name,
-                            districtId: selected.district_id
-                        }));
+                    if (Array.isArray(data) && data.length > 0) {
+                        list = data;
                     }
                 }
             } catch (error) {
                 console.error('Error fetching districts:', error);
+            }
+
+            setDistricts(list);
+            
+            if (list.length > 0) {
+                let matched = null;
+                
+                // 1. Match by district ID
+                if (preSelectedDistrictId) {
+                    matched = list.find(d => d.district_id === parseInt(preSelectedDistrictId));
+                }
+
+                // 2. Fallback: match district name or place location keyword
+                if (!matched && preSelectedName) {
+                    const nameLower = preSelectedName.toLowerCase();
+                    // Ella -> Badulla district
+                    if (nameLower.includes('ella') || nameLower.includes('nine arch')) {
+                        matched = list.find(d => d.district_name.toLowerCase() === 'badulla');
+                    } else if (nameLower.includes('sigiriya')) {
+                        matched = list.find(d => d.district_name.toLowerCase() === 'matale');
+                    } else {
+                        matched = list.find(d => 
+                            nameLower.includes(d.district_name.toLowerCase()) ||
+                            d.district_name.toLowerCase().includes(nameLower)
+                        );
+                    }
+                }
+
+                const selected = matched || list[0];
+                setFormData(prev => ({
+                    ...prev,
+                    destination: selected.district_name,
+                    districtId: selected.district_id
+                }));
             }
         };
         fetchDistricts();

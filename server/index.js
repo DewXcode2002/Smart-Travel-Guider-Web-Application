@@ -416,11 +416,41 @@ app.get('/api/ratings/stats', (req, res) => {
     });
 });
 
+const DEFAULT_DISTRICTS_LIST = [
+    { district_id: 1, district_name: 'Ampara', province: 'Eastern' },
+    { district_id: 2, district_name: 'Anuradhapura', province: 'North Central' },
+    { district_id: 3, district_name: 'Badulla', province: 'Uva' },
+    { district_id: 4, district_name: 'Batticaloa', province: 'Eastern' },
+    { district_id: 5, district_name: 'Colombo', province: 'Western' },
+    { district_id: 6, district_name: 'Galle', province: 'Southern' },
+    { district_id: 7, district_name: 'Gampaha', province: 'Western' },
+    { district_id: 8, district_name: 'Hambantota', province: 'Southern' },
+    { district_id: 9, district_name: 'Jaffna', province: 'Northern' },
+    { district_id: 10, district_name: 'Kalutara', province: 'Western' },
+    { district_id: 11, district_name: 'Kandy', province: 'Central' },
+    { district_id: 12, district_name: 'Kegalle', province: 'Sabaragamuwa' },
+    { district_id: 13, district_name: 'Kilinochchi', province: 'Northern' },
+    { district_id: 14, district_name: 'Kurunegala', province: 'North Western' },
+    { district_id: 15, district_name: 'Mannar', province: 'Northern' },
+    { district_id: 16, district_name: 'Matale', province: 'Central' },
+    { district_id: 17, district_name: 'Matara', province: 'Southern' },
+    { district_id: 18, district_name: 'Monaragala', province: 'Uva' },
+    { district_id: 19, district_name: 'Mullaitivu', province: 'Northern' },
+    { district_id: 20, district_name: 'Nuwara Eliya', province: 'Central' },
+    { district_id: 21, district_name: 'Polonnaruwa', province: 'North Central' },
+    { district_id: 22, district_name: 'Puttalam', province: 'North Western' },
+    { district_id: 23, district_name: 'Ratnapura', province: 'Sabaragamuwa' },
+    { district_id: 24, district_name: 'Trincomalee', province: 'Eastern' },
+    { district_id: 25, district_name: 'Vavuniya', province: 'Northern' }
+];
+
 // Districts and Recommendations Routes
 app.get('/api/districts', (req, res) => {
     const sql = "SELECT * FROM districts ORDER BY district_name ASC";
     db.query(sql, (err, results) => {
-        if (err) return res.status(500).json({ message: err.message });
+        if (err || !results || results.length === 0) {
+            return res.json(DEFAULT_DISTRICTS_LIST);
+        }
         res.json(results);
     });
 });
@@ -883,7 +913,9 @@ app.get('/api/users/:id', (req, res) => {
 // Global Retrieval (No auth for viewing, but mutative actions protected below)
 app.get('/api/districts', (req, res) => {
     db.query("SELECT * FROM districts", (err, results) => {
-        if (err) return res.status(500).json({ message: err.message });
+        if (err || !results || results.length === 0) {
+            return res.json(DEFAULT_DISTRICTS_LIST);
+        }
         res.json(results);
     });
 });

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
-import { Share2, Download, Clock, MapPin, LayoutList, ArrowRight, Plus, Building2, UserCheck, Car, Users, Sparkles, Camera, Coffee, SlidersHorizontal, CheckCircle2, AlertCircle, Zap, BedDouble, ChevronDown, Award, RefreshCw, Phone, Mail, Globe, ExternalLink, Star, Wifi, Info } from 'lucide-react';
+import { Share2, Download, Clock, MapPin, LayoutList, ArrowRight, Plus, Building2, UserCheck, Car, Users, Sparkles, Camera, Coffee, SlidersHorizontal, CheckCircle2, AlertCircle, Zap, BedDouble, ChevronDown, Award, RefreshCw, Phone, Mail, Globe, ExternalLink, Star, Wifi, Info, MessageSquare } from 'lucide-react';
 import PriceDisplay from '../components/PriceDisplay';
 import PaymentModal from '../components/PaymentModal';
 
