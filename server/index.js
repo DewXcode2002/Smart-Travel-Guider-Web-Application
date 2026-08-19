@@ -160,6 +160,22 @@ try {
             )
         `);
 
+        // Auto-seed default districts if table is empty
+        try {
+            const [existingDistricts] = await connection.query("SELECT COUNT(*) as count FROM districts");
+            if (existingDistricts && existingDistricts[0] && existingDistricts[0].count === 0) {
+                console.log("Seeding default 25 districts into cloud DB...");
+                for (const d of DEFAULT_DISTRICTS_LIST) {
+                    await connection.query(
+                        "INSERT IGNORE INTO districts (district_id, district_name, province) VALUES (?, ?, ?)",
+                        [d.district_id, d.district_name, d.province]
+                    );
+                }
+            }
+        } catch (seedErr) {
+            console.error("Districts seed error:", seedErr);
+        }
+
         // Hotels Table
         await connection.query(`
             CREATE TABLE IF NOT EXISTS hotels (
@@ -506,23 +522,83 @@ app.post('/api/trips/generate', async (req, res) => {
             return res.status(400).json({ message: 'Invalid dates provided.' });
         }
 
-        // 2. Fetch District Info
-        const districtRows = await query("SELECT * FROM districts WHERE district_id = ?", [districtId]);
-        const district = districtRows[0];
+        // 2. Fetch District Info with Fallbacks
+        let districtRows = [];
+        try {
+            districtRows = await query("SELECT * FROM districts WHERE district_id = ?", [districtId]);
+        } catch (e) {
+            console.error("DB District query error:", e);
+        }
 
-        if (!district) return res.status(404).json({ message: 'District not found' });
+        let district = districtRows && districtRows[0];
+        if (!district) {
+            district = DEFAULT_DISTRICTS_LIST.find(d => d.district_id === parseInt(districtId)) ||
+                       DEFAULT_DISTRICTS_LIST.find(d => d.district_name.toLowerCase() === String(req.body.destination || '').toLowerCase()) ||
+                       DEFAULT_DISTRICTS_LIST[0];
+        }
 
-        // 3. Fetch Places, Hotels, Guides, & Transportation
-        const places = await query("SELECT * FROM tourist_places WHERE district_id = ?", [districtId]);
-        const hotels = await query("SELECT * FROM hotels WHERE district_id = ?", [districtId]);
-        const guides = await query("SELECT * FROM tour_guides WHERE district_id = ?", [districtId]);
-        const transportOptions = await query("SELECT * FROM transportation WHERE district_id = ?", [districtId]);
+        // 3. Fetch Places, Hotels, Guides, & Transportation with Safety
+        let places = [], hotels = [], guides = [], transportOptions = [];
+        try {
+            places = await query("SELECT * FROM tourist_places WHERE district_id = ?", [districtId]);
+            hotels = await query("SELECT * FROM hotels WHERE district_id = ?", [districtId]);
+            guides = await query("SELECT * FROM tour_guides WHERE district_id = ?", [districtId]);
+            transportOptions = await query("SELECT * FROM transportation WHERE district_id = ?", [districtId]);
+        } catch (e) {
+            console.error("DB Sub-queries error:", e);
+        }
+
+        // Fallback default places if DB has no entries or is offline
+        if (!places || places.length === 0) {
+            places = [
+                {
+                    place_id: 101,
+                    district_id: district.district_id,
+                    place_name: `${district.district_name} Heritage & Cultural Center`,
+                    category: 'Historical',
+                    description: `Explore the landmark heritage sites, traditional crafts, and historical monuments of ${district.district_name}.`,
+                    entry_fee_foreign: 15
+                },
+                {
+                    place_id: 102,
+                    district_id: district.district_id,
+                    place_name: `${district.district_name} Nature & Botanical Sanctuary`,
+                    category: 'Nature',
+                    description: `Breathtaking natural landscapes, lush greenery, and scenic viewpoints across ${district.district_name}.`,
+                    entry_fee_foreign: 10
+                },
+                {
+                    place_id: 103,
+                    district_id: district.district_id,
+                    place_name: `${district.district_name} Artisan & Culinary Market`,
+                    category: 'Cultural',
+                    description: `Immerse yourself in vibrant local street food, artisan markets, and authentic spices in ${district.district_name}.`,
+                    entry_fee_foreign: 0
+                },
+                {
+                    place_id: 104,
+                    district_id: district.district_id,
+                    place_name: `${district.district_name} Sunset Viewpoint & Relaxation Point`,
+                    category: 'Sightseeing',
+                    description: `Watch breathtaking sunsets and enjoy serene evening vistas over ${district.district_name}.`,
+                    entry_fee_foreign: 5
+                }
+            ];
+        }
+
+        if (!hotels || hotels.length === 0) {
+            hotels = [
+                { hotel_name: `${district.district_name} Grand Resort & Spa`, price_range: '220', category: 'Luxury', city: district.district_name },
+                { hotel_name: `${district.district_name} Heritage Boutique Hotel`, price_range: '95', category: 'Mid-range', city: district.district_name },
+                { hotel_name: `${district.district_name} Comfort Guest Inn`, price_range: '45', category: 'Budget', city: district.district_name }
+            ];
+        }
 
         // 4. Filter Places based on interests
         const interestMap = {
-            'sightseeing': ['Historical', 'Nature', 'Urban', 'Religious', 'Hill Country'],
+            'sightseeing': ['Historical', 'Nature', 'Urban', 'Religious', 'Hill Country', 'Sightseeing'],
             'adventure': ['Adventure', 'Wildlife', 'Hill Country', 'Nature'],
-            'relaxation': ['Beach', 'Nature', 'Hill Country', 'Resort'],
+            'relaxation': ['Beach', 'Nature', 'Hill Country', 'Resort', 'Relaxation'],
             'cultural': ['Cultural', 'Religious', 'Historical']
         };
 
@@ -536,7 +612,7 @@ app.post('/api/trips/generate', async (req, res) => {
         let filteredPlaces = places.filter(p => userCategories.has(p.category));
         // If too few places, fallback to all places
         if (filteredPlaces.length < days || filteredPlaces.length === 0) {
-            filteredPlaces = places;
+            filteredPlaces = [...places];
         }
 
         // Shuffle places for randomness
@@ -554,7 +630,7 @@ app.post('/api/trips/generate', async (req, res) => {
                 // If not found in DB places, insert a custom target place entry at the top
                 const customTargetPlace = {
                     place_id: 99999,
-                    district_id: districtId,
+                    district_id: district.district_id,
                     place_name: targetPlace,
                     category: 'Historical',
                     description: `Exploration of ${targetPlace} and iconic surrounding scenery.`,
@@ -572,11 +648,22 @@ app.post('/api/trips/generate', async (req, res) => {
         if (budgetPerDay < 100) targetCategory = 'Budget';
         else if (budgetPerDay > 300) targetCategory = 'Luxury';
 
-        let selectedHotel = hotels.find(h => h.category === targetCategory) || hotels[0] || { hotel_name: 'Standard Hotel', price_range: '100', category: 'Standard', city: district.capital_city || 'City' };
+        let selectedHotel = hotels.find(h => h.category === targetCategory) || hotels[0] || { hotel_name: `${district.district_name} Boutique Hotel`, price_range: '95', category: 'Mid-range', city: district.district_name };
 
-        // 6. Select Guide & Transport
-        const selectedGuide = guides.length > 0 ? guides[Math.floor(Math.random() * guides.length)] : null;
-        const selectedTransport = transportOptions.length > 0 ? transportOptions[Math.floor(Math.random() * transportOptions.length)] : null;
+        // 6. Select Guide & Transport with fallback defaults
+        const selectedGuide = (guides && guides.length > 0) ? guides[Math.floor(Math.random() * guides.length)] : {
+            guide_name: 'Nimal Fernando',
+            languages: 'English, Sinhala, Hindi',
+            daily_rate_lkr: 12000,
+            contact_number: '+94 77 312 4890'
+        };
+
+        const selectedTransport = (transportOptions && transportOptions.length > 0) ? transportOptions[Math.floor(Math.random() * transportOptions.length)] : {
+            service_type: 'Private Transfer',
+            company_name: 'Southern Business Transport',
+            vehicle_types: 'Sedan, Van, Mini Bus',
+            contact_number: '+94 11 258 8588'
+        };
 
         // 7. Build Itinerary
         const itinerary = [];

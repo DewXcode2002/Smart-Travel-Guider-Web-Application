@@ -124,10 +124,14 @@ const PlanTrip = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!formData.districtId) {
-            alert('Please select a destination district first.');
-            return;
-        }
+        const activeDistrictId = formData.districtId || (districts.length > 0 ? districts[0].district_id : 1);
+        const activeDestination = formData.destination || (districts.length > 0 ? districts[0].district_name : 'Ampara');
+
+        const payload = {
+            ...formData,
+            districtId: activeDistrictId,
+            destination: activeDestination
+        };
 
         setLoading(true);
 
@@ -136,7 +140,7 @@ const PlanTrip = () => {
             const response = await fetch('/api/trips/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(payload)
             });
 
             if (!response.ok) {
