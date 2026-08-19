@@ -550,40 +550,28 @@ app.post('/api/trips/generate', async (req, res) => {
 
         // Fallback default places if DB has no entries or is offline
         if (!places || places.length === 0) {
-            places = [
-                {
-                    place_id: 101,
-                    district_id: district.district_id,
-                    place_name: `${district.district_name} Heritage & Cultural Center`,
-                    category: 'Historical',
-                    description: `Explore the landmark heritage sites, traditional crafts, and historical monuments of ${district.district_name}.`,
-                    entry_fee_foreign: 15
-                },
-                {
-                    place_id: 102,
-                    district_id: district.district_id,
-                    place_name: `${district.district_name} Nature & Botanical Sanctuary`,
-                    category: 'Nature',
-                    description: `Breathtaking natural landscapes, lush greenery, and scenic viewpoints across ${district.district_name}.`,
-                    entry_fee_foreign: 10
-                },
-                {
-                    place_id: 103,
-                    district_id: district.district_id,
-                    place_name: `${district.district_name} Artisan & Culinary Market`,
-                    category: 'Cultural',
-                    description: `Immerse yourself in vibrant local street food, artisan markets, and authentic spices in ${district.district_name}.`,
-                    entry_fee_foreign: 0
-                },
-                {
-                    place_id: 104,
-                    district_id: district.district_id,
-                    place_name: `${district.district_name} Sunset Viewpoint & Relaxation Point`,
-                    category: 'Sightseeing',
-                    description: `Watch breathtaking sunsets and enjoy serene evening vistas over ${district.district_name}.`,
-                    entry_fee_foreign: 5
-                }
-            ];
+            const dName = district.district_name || 'Destination';
+            if (dName.toLowerCase().includes('galle')) {
+                places = [
+                    { place_id: 101, district_id: district.district_id, place_name: 'Galle Fort', category: 'Historical', description: 'UNESCO World Heritage Dutch fort built in 1588 with cobblestone streets and bastions.', entry_fee_foreign: 0 },
+                    { place_id: 102, district_id: district.district_id, place_name: 'Jungle Beach', category: 'Beach', description: 'Secluded crescent-shaped beach near Unawatuna perfect for swimming and snorkeling.', entry_fee_foreign: 0 },
+                    { place_id: 103, district_id: district.district_id, place_name: 'Unawatuna Beach', category: 'Beach', description: 'Popular crescent-shaped beach known for golden sand and coastal dining.', entry_fee_foreign: 0 },
+                    { place_id: 104, district_id: district.district_id, place_name: 'Japanese Peace Pagoda', category: 'Religious', description: 'White stupa on Rumassala Hill with breathtaking panoramic views of the ocean.', entry_fee_foreign: 0 },
+                    { place_id: 105, district_id: district.district_id, place_name: 'Galle Lighthouse', category: 'Historical', description: 'Oldest light station in Sri Lanka located within the iconic Galle Fort walls.', entry_fee_foreign: 0 },
+                    { place_id: 106, district_id: district.district_id, place_name: 'Hikkaduwa Coral Reef & Sanctuary', category: 'Nature', description: 'Famous coastal marine sanctuary renowned for coral reefs, sea turtles, and surfing.', entry_fee_foreign: 10 },
+                    { place_id: 107, district_id: district.district_id, place_name: 'Koggala Lake & Cinnamon Island', category: 'Nature', description: 'Serene lake dotted with islands, herbal gardens, and traditional cinnamon cultivation.', entry_fee_foreign: 15 },
+                    { place_id: 108, district_id: district.district_id, place_name: 'National Maritime Museum', category: 'Cultural', description: 'Museum housed in a 1671 Dutch warehouse displaying marine artifacts and shipwrecks.', entry_fee_foreign: 5 }
+                ];
+            } else {
+                places = [
+                    { place_id: 101, district_id: district.district_id, place_name: `${dName} Heritage & Cultural Center`, category: 'Historical', description: `Explore the landmark heritage sites, traditional crafts, and monuments of ${dName}.`, entry_fee_foreign: 15 },
+                    { place_id: 102, district_id: district.district_id, place_name: `${dName} Nature & Botanical Sanctuary`, category: 'Nature', description: `Breathtaking natural landscapes, lush greenery, and scenic viewpoints across ${dName}.`, entry_fee_foreign: 10 },
+                    { place_id: 103, district_id: district.district_id, place_name: `${dName} Artisan & Culinary Market`, category: 'Cultural', description: `Immerse yourself in vibrant local street food, artisan markets, and authentic spices in ${dName}.`, entry_fee_foreign: 0 },
+                    { place_id: 104, district_id: district.district_id, place_name: `${dName} Panoramic Viewpoint`, category: 'Sightseeing', description: `Watch breathtaking views and enjoy serene vistas over ${dName}.`, entry_fee_foreign: 5 },
+                    { place_id: 105, district_id: district.district_id, place_name: `${dName} Historic Temple & Monastery`, category: 'Religious', description: `Ancient architecture and spiritual sanctuary nestled in ${dName}.`, entry_fee_foreign: 5 },
+                    { place_id: 106, district_id: district.district_id, place_name: `${dName} Eco Nature Trail`, category: 'Adventure', description: `Guided nature walk through pristine forest trails and wildlife habitats.`, entry_fee_foreign: 10 }
+                ];
+            }
         }
 
         if (!hotels || hotels.length === 0) {
@@ -665,7 +653,7 @@ app.post('/api/trips/generate', async (req, res) => {
             contact_number: '+94 11 258 8588'
         };
 
-        // 7. Build Itinerary
+        // 7. Build Itinerary (Modulo loop guarantees all days get Morning, Afternoon, Evening)
         const itinerary = [];
         let placeIndex = 0;
 
@@ -682,41 +670,40 @@ app.post('/api/trips/generate', async (req, res) => {
             };
 
             // Morning Activity
-            if (placeIndex < filteredPlaces.length) {
-                const p = filteredPlaces[placeIndex++];
-                dayPlan.morning = {
-                    name: p.place_name,
-                    type: p.category,
-                    description: p.description || `Explore the amazing ${p.place_name}.`,
-                    location: district.district_name,
-                    image: getPlaceImage(p.place_name, p.category),
-                    entryFee: p.entry_fee_foreign || 0
-                };
-            }
+            const pMorning = filteredPlaces[placeIndex % filteredPlaces.length];
+            placeIndex++;
+            dayPlan.morning = {
+                name: pMorning.place_name,
+                type: pMorning.category,
+                description: pMorning.description || `Explore the amazing ${pMorning.place_name}.`,
+                location: district.district_name,
+                image: getPlaceImage(pMorning.place_name, pMorning.category),
+                entryFee: pMorning.entry_fee_foreign || 0
+            };
 
             // Afternoon Activity
-            if (placeIndex < filteredPlaces.length) {
-                const p = filteredPlaces[placeIndex++];
-                dayPlan.afternoon = {
-                    name: p.place_name,
-                    type: p.category,
-                    description: p.description || `Enjoy a visit to ${p.place_name}.`,
-                    location: district.district_name,
-                    image: getPlaceImage(p.place_name, p.category),
-                    entryFee: p.entry_fee_foreign || 0
-                };
-            }
+            const pAfternoon = filteredPlaces[placeIndex % filteredPlaces.length];
+            placeIndex++;
+            dayPlan.afternoon = {
+                name: pAfternoon.place_name,
+                type: pAfternoon.category,
+                description: pAfternoon.description || `Enjoy a visit to ${pAfternoon.place_name}.`,
+                location: district.district_name,
+                image: getPlaceImage(pAfternoon.place_name, pAfternoon.category),
+                entryFee: pAfternoon.entry_fee_foreign || 0
+            };
 
-            // Evening - Could be another place or Relax
-            if (placeIndex < filteredPlaces.length && Math.random() > 0.3) {
-                const p = filteredPlaces[placeIndex++];
+            // Evening Activity
+            if (filteredPlaces.length > 2 && (i % 2 === 0 || placeIndex < filteredPlaces.length)) {
+                const pEvening = filteredPlaces[placeIndex % filteredPlaces.length];
+                placeIndex++;
                 dayPlan.evening = {
-                    name: p.place_name,
-                    type: p.category,
-                    description: p.description || `Evening visit to ${p.place_name}.`,
+                    name: pEvening.place_name,
+                    type: pEvening.category,
+                    description: pEvening.description || `Evening visit to ${pEvening.place_name}.`,
                     location: district.district_name,
-                    image: getPlaceImage(p.place_name, p.category),
-                    entryFee: p.entry_fee_foreign || 0
+                    image: getPlaceImage(pEvening.place_name, pEvening.category),
+                    entryFee: pEvening.entry_fee_foreign || 0
                 };
             } else {
                 dayPlan.evening = {
